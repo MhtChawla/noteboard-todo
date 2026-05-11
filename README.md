@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# noteboard 🗂️
 
-## Getting Started
+> your tasks. your notes. zero drama.
 
-First, run the development server:
+a clean, minimal kanban board that lives entirely in your browser. no accounts, no backend, no subscription. just open it and get to work.
+
+---
+
+## what's inside
+
+**4 columns that actually make sense**
+
+| column | vibe |
+|---|---|
+| 📋 To Do | the list that haunts you |
+| ⚡ In Progress | where things actually happen |
+| ✅ Complete | dopamine hits only |
+| 🚧 Blocked | honest about it, at least |
+
+**+ a notes panel** on the right — completely separate from the board. personal scratch pad, brain dump, whatever you need.
+
+everything saves automatically to `localStorage`. refresh, close the tab, come back tomorrow — it's all there.
+
+---
+
+## quickstart
 
 ```bash
+git clone <your-repo-url>
+cd noteboard
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+open [http://localhost:3000](http://localhost:3000) and you're done.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## how to use it
 
-## Learn More
+**add a task** — click `+` next to any column header, or the dashed area when a column is empty
 
-To learn more about Next.js, take a look at the following resources:
+**move a task** — drag it to another column, or hit the `···` menu on any card → Move to
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**edit a task** — `···` menu → Edit, or just double-tap the card
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**notes** — click anywhere in the right panel and start typing. autosaves after 600ms. collapse it with the `<` button when you need more board space
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## built with
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 16** — app router
+- **React 19**
+- **Tailwind CSS v4**
+- **TypeScript**
+- **localStorage** — the only database you need
+
+zero external UI libraries. drag and drop is native HTML5.
+
+---
+
+## project structure
+
+```
+app/
+  page.tsx          ← all state lives here
+  layout.tsx
+  globals.css
+
+components/
+  TaskCard.tsx      ← individual card (drag, edit, delete)
+  Column.tsx        ← drop zone + add task form
+  NotesPanel.tsx    ← the right sidebar
+
+lib/
+  types.ts          ← Task type + COLUMNS config
+  storage.ts        ← localStorage read/write
+```
+
+see [`DEVELOPER_NOTES.md`](./DEVELOPER_NOTES.md) for architecture deep-dive.
+
+---
+
+## deploy
+
+```bash
+npm run build
+npm run start
+```
+
+or one-click on [Vercel](https://vercel.com) — it just works.
+
+---
+
+made with ☕ and a strong opinion that productivity apps should not require a login
