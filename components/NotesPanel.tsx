@@ -1,17 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { loadNotes, saveNotes } from "@/lib/storage";
 
 export default function NotesPanel() {
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(loadNotes);
   const [collapsed, setCollapsed] = useState(false);
   const [saved, setSaved] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setNotes(loadNotes());
-  }, []);
 
   function handleChange(val: string) {
     setNotes(val);
