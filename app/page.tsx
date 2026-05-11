@@ -1,65 +1,130 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Task, Status, COLUMNS } from "@/lib/types";
+import { loadTasks, saveTasks } from "@/lib/storage";
+import Column from "@/components/Column";
+import NotesPanel from "@/components/NotesPanel";
+
+function generateId() {
+  return `task_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
 
 export default function Home() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const dragTaskId = useRef<string | null>(null);
+
+  useEffect(() => {
+    setTasks(loadTasks());
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) saveTasks(tasks);
+  }, [tasks, mounted]);
+
+  const addTask = useCallback((status: Status, title: string, description: string) => {
+    const task: Task = {
+      id: generateId(),
+      title,
+      description,
+      status,
+      createdAt: Date.now(),
+      tags: [],
+    };
+    setTasks((prev) => [task, ...prev]);
+  }, []);
+
+  const updateTask = useCallback((id: string, updates: Partial<Task>) => {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+  }, []);
+
+  const deleteTask = useCallback((id: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const onDragStart = useCallback((taskId: string) => {
+    dragTaskId.current = taskId;
+  }, []);
+
+  const onDrop = useCallback((targetStatus: Status) => {
+    if (!dragTaskId.current) return;
+    updateTask(dragTaskId.current, { status: targetStatus });
+    dragTaskId.current = null;
+  }, [updateTask]);
+
+  if (!mounted) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#f6f8fa]">
+        <div className="w-5 h-5 border-2 border-[#d0d7de] border-t-[#0969da] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter((t) => t.status === "complete").length;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex h-screen overflow-hidden bg-[#f6f8fa]">
+      {/* Main board */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-[#d0d7de] flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 bg-[#1f2328] rounded-lg flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="white">
+                <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-[#1f2328]">Noteboard</h1>
+              <p className="text-[11px] text-[#57606a]">
+                {completedTasks}/{totalTasks} tasks completed
+              </p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          {totalTasks > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="w-32 h-1.5 bg-[#eaeef2] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#2da44e] rounded-full transition-all duration-500"
+                  style={{ width: `${(completedTasks / totalTasks) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs text-[#57606a] tabular-nums">
+                {Math.round((completedTasks / totalTasks) * 100)}%
+              </span>
+            </div>
+          )}
+        </header>
+
+        {/* Board */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden">
+          <div className="flex gap-4 p-6 h-full" style={{ minWidth: "fit-content" }}>
+            {COLUMNS.map((col) => (
+              <div key={col.id} className="flex flex-col w-64 flex-shrink-0 h-full">
+                <div className="flex-1 overflow-y-auto pr-0.5">
+                  <Column
+                    column={col}
+                    tasks={tasks.filter((t) => t.status === col.id)}
+                    onAddTask={addTask}
+                    onUpdateTask={updateTask}
+                    onDeleteTask={deleteTask}
+                    onDragStart={onDragStart}
+                    onDrop={onDrop}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
+
+      {/* Notes sidebar */}
+      <NotesPanel />
     </div>
   );
 }
