@@ -2,8 +2,14 @@
 
 import { useState, useRef } from "react";
 import { loadNotes, saveNotes } from "@/lib/storage";
+import { Status } from "@/lib/types";
+import RecurringTasksPanel from "./RecurringTasksPanel";
 
-export default function NotesPanel() {
+interface Props {
+  onAddTask: (status: Status, title: string, description: string) => void;
+}
+
+export default function NotesPanel({ onAddTask }: Props) {
   const [notes, setNotes] = useState(loadNotes);
   const [collapsed, setCollapsed] = useState(false);
   const [saved, setSaved] = useState(true);
@@ -49,15 +55,27 @@ export default function NotesPanel() {
         </button>
       </div>
 
-      {/* Textarea */}
       {!collapsed && (
-        <textarea
-          value={notes}
-          onChange={(e) => handleChange(e.target.value)}
-          placeholder={"Jot anything here...\n\nThis is your personal scratch pad — completely separate from the board."}
-          className="flex-1 w-full p-3 text-xs text-[#1f2328] placeholder-[#8c959f] leading-relaxed resize-none focus:outline-none"
-          style={{ fontFamily: "inherit" }}
-        />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Notes — top 50% */}
+          <div className="flex flex-col" style={{ height: "50%" }}>
+            <textarea
+              value={notes}
+              onChange={(e) => handleChange(e.target.value)}
+              placeholder={"Jot anything here...\n\nThis is your personal scratch pad — completely separate from the board."}
+              className="flex-1 w-full p-3 text-xs text-[#1f2328] placeholder-[#8c959f] leading-relaxed resize-none focus:outline-none"
+              style={{ fontFamily: "inherit" }}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-[#d0d7de] flex-shrink-0" />
+
+          {/* Recurring tasks — bottom 50% */}
+          <div className="flex flex-col overflow-hidden" style={{ height: "50%" }}>
+            <RecurringTasksPanel onAddTask={onAddTask} />
+          </div>
+        </div>
       )}
 
       {collapsed && (

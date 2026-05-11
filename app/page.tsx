@@ -124,7 +124,7 @@ export default function Home() {
       </div>
 
       {/* Notes sidebar */}
-      <NotesPanel />
+      <NotesPanel onAddTask={addTask} />
     </div>
   );
 }

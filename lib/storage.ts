@@ -1,7 +1,8 @@
-import { Task } from "./types";
+import { Task, RecurringTask } from "./types";
 
 const TASKS_KEY = "noteboard_tasks";
 const NOTES_KEY = "noteboard_notes";
+const RECURRING_KEY = "noteboard_recurring";
 
 export function loadTasks(): Task[] {
   if (typeof window === "undefined") return [];
@@ -24,4 +25,18 @@ export function loadNotes(): string {
 
 export function saveNotes(notes: string): void {
   localStorage.setItem(NOTES_KEY, notes);
+}
+
+export function loadRecurringTasks(): RecurringTask[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(RECURRING_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveRecurringTasks(tasks: RecurringTask[]): void {
+  localStorage.setItem(RECURRING_KEY, JSON.stringify(tasks));
 }
