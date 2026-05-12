@@ -31,6 +31,12 @@ export interface RecurringTask {
   createdAt: number;
 }
 
+export interface FutureTask {
+  id: string;
+  title: string;
+  createdAt: number;
+}
+
 export interface Column {
   id: Status;
   label: string;

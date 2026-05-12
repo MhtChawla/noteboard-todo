@@ -1,4 +1,4 @@
-import { Task, RecurringTask, Plan, Pointer } from "./types";
+import { Task, RecurringTask, Plan, Pointer, FutureTask } from "./types";
 
 const TASKS_KEY = "noteboard_tasks";
 const NOTES_KEY = "noteboard_notes";
@@ -69,4 +69,20 @@ export function loadPointers(): Pointer[] {
 
 export function savePointers(pointers: Pointer[]): void {
   localStorage.setItem(POINTERS_KEY, JSON.stringify(pointers));
+}
+
+const FUTURE_KEY = "noteboard_future";
+
+export function loadFutureTasks(): FutureTask[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(FUTURE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveFutureTasks(tasks: FutureTask[]): void {
+  localStorage.setItem(FUTURE_KEY, JSON.stringify(tasks));
 }
