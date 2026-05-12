@@ -1,8 +1,10 @@
-import { Task, RecurringTask } from "./types";
+import { Task, RecurringTask, Plan, Pointer } from "./types";
 
 const TASKS_KEY = "noteboard_tasks";
 const NOTES_KEY = "noteboard_notes";
 const RECURRING_KEY = "noteboard_recurring";
+const PLANS_KEY = "noteboard_plans";
+const POINTERS_KEY = "noteboard_pointers";
 
 export function loadTasks(): Task[] {
   if (typeof window === "undefined") return [];
@@ -39,4 +41,32 @@ export function loadRecurringTasks(): RecurringTask[] {
 
 export function saveRecurringTasks(tasks: RecurringTask[]): void {
   localStorage.setItem(RECURRING_KEY, JSON.stringify(tasks));
+}
+
+export function loadPlans(): Plan[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(PLANS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function savePlans(plans: Plan[]): void {
+  localStorage.setItem(PLANS_KEY, JSON.stringify(plans));
+}
+
+export function loadPointers(): Pointer[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(POINTERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function savePointers(pointers: Pointer[]): void {
+  localStorage.setItem(POINTERS_KEY, JSON.stringify(pointers));
 }

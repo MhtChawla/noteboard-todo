@@ -1,5 +1,18 @@
 export type Status = "todo" | "progress" | "complete" | "blocked";
 
+export interface Plan {
+  id: string;
+  title: string;
+  body: string;
+  createdAt: number;
+}
+
+export interface Pointer {
+  id: string;
+  label: string;
+  href: string;
+}
+
 export type RecurInterval = "1D" | "1W";
 
 export interface Task {
