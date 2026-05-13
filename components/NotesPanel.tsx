@@ -15,7 +15,7 @@ interface Props {
 
 export default function NotesPanel({ onAddTask }: Props) {
   const [collapsed, setCollapsed] = useState(false);
-  const [tab, setTab] = useState<"plans" | "pointers" | "recurring">("plans");
+  const [tab, setTab] = useState<"plans" | "pointers" | "recurring">("recurring");
 
   const [plans, setPlans] = useState<Plan[]>(loadPlans);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
@@ -98,9 +98,9 @@ export default function NotesPanel({ onAddTask }: Props) {
   }
 
   const TAB_LABELS = [
+    { key: "recurring" as const, label: "Recurring" },
     { key: "plans" as const, label: "Plans" },
     { key: "pointers" as const, label: "Pointers" },
-    { key: "recurring" as const, label: "Recurring" },
   ];
 
   return (
