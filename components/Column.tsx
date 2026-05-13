@@ -10,12 +10,13 @@ interface Props {
   onAddTask: (status: Status, title: string, description: string) => void;
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
+  onDeleteAllTasks: (status: Status) => void;
   onDragStart: (taskId: string) => void;
   onDrop: (status: Status) => void;
 }
 
 export default function Column({
-  column, tasks, onAddTask, onUpdateTask, onDeleteTask, onDragStart, onDrop,
+  column, tasks, onAddTask, onUpdateTask, onDeleteTask, onDeleteAllTasks, onDragStart, onDrop,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -44,15 +45,28 @@ export default function Column({
           <span className="text-xs font-semibold text-[#1f2328] uppercase tracking-wider">{column.label}</span>
           <span className="text-xs bg-[#eaeef2] text-[#57606a] rounded-full px-2 py-0.5 font-medium">{tasks.length}</span>
         </div>
-        <button
-          onClick={() => setAdding(true)}
-          title="Add task"
-          className="text-[#57606a] hover:text-[#0969da] hover:bg-[#ddf4ff] rounded-md p-1 transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/>
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          {column.id === "complete" && tasks.length > 0 && (
+            <button
+              onClick={() => onDeleteAllTasks(column.id)}
+              title="Delete all completed tasks"
+              className="text-[#57606a] hover:text-[#cf222e] hover:bg-[#ffebe9] rounded-md p-1 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z"/>
+              </svg>
+            </button>
+          )}
+          <button
+            onClick={() => setAdding(true)}
+            title="Add task"
+            className="text-[#57606a] hover:text-[#0969da] hover:bg-[#ddf4ff] rounded-md p-1 transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Drop zone */}

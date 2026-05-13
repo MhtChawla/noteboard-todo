@@ -44,6 +44,10 @@ export default function Home() {
     setTasks((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const deleteAllTasks = useCallback((status: Status) => {
+    setTasks((prev) => prev.filter((t) => t.status !== status));
+  }, []);
+
   const onDragStart = useCallback((taskId: string) => {
     dragTaskId.current = taskId;
   }, []);
@@ -113,6 +117,7 @@ export default function Home() {
                     onAddTask={addTask}
                     onUpdateTask={updateTask}
                     onDeleteTask={deleteTask}
+                    onDeleteAllTasks={deleteAllTasks}
                     onDragStart={onDragStart}
                     onDrop={onDrop}
                   />
