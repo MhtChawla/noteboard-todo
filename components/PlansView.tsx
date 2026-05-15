@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useLayoutEffect } from "react";
+import React, { useState, useCallback, useRef, useLayoutEffect, useMemo } from "react";
 import { Plan, IdeaCard } from "@/lib/types";
 
 function generateId() {
@@ -33,7 +33,7 @@ function RichEditor({
 
   useLayoutEffect(() => {
     if (editorRef.current) editorRef.current.innerHTML = value || "";
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync external updates (e.g. side panel edits) into DOM when not focused
@@ -171,11 +171,113 @@ function genCardId() {
   return `card_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
+const PLAN_COLORS = ["#0969da", "#2da44e", "#9a6700", "#8250df", "#cf222e", "#0891b2"];
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, "").trim();
+}
+
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function computeFocusScore(plan: Plan): number {
+  const goalsWords = wordCount(stripHtml(plan.goals ?? ""));
+  const ideaCount = (plan.ideaCards ?? []).length;
+  return Math.max(1, goalsWords + ideaCount);
+}
+
+function FocusGraph({ plans }: { plans: Plan[] }) {
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  const segments = useMemo(() => {
+    if (plans.length === 0) return [];
+    const scores = plans.map((p) => ({ id: p.id, title: p.title, score: computeFocusScore(p) }));
+    const total = scores.reduce((s, x) => s + x.score, 0);
+    let cumAngle = -Math.PI / 2;
+    return scores.map((x, i) => {
+      const fraction = x.score / total;
+      const angle = fraction * 2 * Math.PI;
+      const startAngle = cumAngle;
+      cumAngle += angle;
+      const endAngle = cumAngle;
+      return { ...x, fraction, startAngle, endAngle, color: PLAN_COLORS[i % PLAN_COLORS.length] };
+    });
+  }, [plans]);
+
+  const cx = 80, cy = 80, R = 62, r = 38;
+
+  function arcPath(startAngle: number, endAngle: number, outerR: number, innerR: number) {
+    const gap = plans.length > 1 ? 0.03 : 0;
+    const s = startAngle + gap;
+    const e = endAngle - gap;
+    const x1 = cx + outerR * Math.cos(s), y1 = cy + outerR * Math.sin(s);
+    const x2 = cx + outerR * Math.cos(e), y2 = cy + outerR * Math.sin(e);
+    const x3 = cx + innerR * Math.cos(e), y3 = cy + innerR * Math.sin(e);
+    const x4 = cx + innerR * Math.cos(s), y4 = cy + innerR * Math.sin(s);
+    const large = e - s > Math.PI ? 1 : 0;
+    return `M ${x1} ${y1} A ${outerR} ${outerR} 0 ${large} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${large} 0 ${x4} ${y4} Z`;
+  }
+
+  const hoveredSeg = segments.find((s) => s.id === hovered);
+
+  if (plans.length === 0) return null;
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center px-3 py-3 bg-white w-full">
+      <p className="text-[10px] font-semibold text-[#57606a] uppercase tracking-wider mb-1.5 self-start">Focus Map</p>
+      <div className="flex flex-col items-center gap-2">
+        <svg width="100%" viewBox="0 0 160 160">
+          {segments.map((seg) => {
+            const isHov = seg.id === hovered;
+            const outerR = isHov ? R + 5 : R;
+            return (
+              <path
+                key={seg.id}
+                d={arcPath(seg.startAngle, seg.endAngle, outerR, r)}
+                fill={seg.color}
+                opacity={hovered && !isHov ? 0.35 : 1}
+                style={{ transition: "opacity 0.15s", cursor: "pointer" }}
+                onMouseEnter={() => setHovered(seg.id)}
+                onMouseLeave={() => setHovered(null)}
+              />
+            );
+          })}
+          <text x={cx} y={cy - 7} textAnchor="middle" fontSize="10" fill="#57606a" fontWeight="600">
+            {hoveredSeg ? `${Math.round(hoveredSeg.fraction * 100)}%` : "focus"}
+          </text>
+          <text x={cx} y={cy + 8} textAnchor="middle" fontSize="8" fill="#8c959f">
+            {hoveredSeg
+              ? hoveredSeg.title.length > 10 ? hoveredSeg.title.slice(0, 10) + "…" : hoveredSeg.title
+              : `${plans.length} plan${plans.length !== 1 ? "s" : ""}`}
+          </text>
+        </svg>
+        <div className="w-full flex flex-col gap-1">
+          {segments.map((seg) => (
+            <div
+              key={seg.id}
+              className="flex items-center gap-1.5 cursor-default min-w-0"
+              onMouseEnter={() => setHovered(seg.id)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: seg.color, opacity: hovered && hovered !== seg.id ? 0.35 : 1 }} />
+              <span className="text-[10px] text-[#57606a] truncate" style={{ opacity: hovered && hovered !== seg.id ? 0.45 : 1 }}>
+                {seg.title}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Plans view ──────────────────────────────────────────────────────────
 export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onPlansChange: (plans: Plan[]) => void }) {
   const [activePlanId, setActivePlanId] = useState<string | null>(() => plans[0]?.id ?? null);
   const [addingNew, setAddingNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
+  const [limitError, setLimitError] = useState(false);
 
   const activePlan = plans.find((p) => p.id === activePlanId) ?? plans[0] ?? null;
 
@@ -186,6 +288,13 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
   const addPlan = useCallback(() => {
     const title = newTitle.trim();
     if (!title) return;
+    if (plans.length >= 6) {
+      setLimitError(true);
+      setTimeout(() => setLimitError(false), 3000);
+      setAddingNew(false);
+      setNewTitle("");
+      return;
+    }
     const plan: Plan = { id: generateId(), title, body: "", goals: "", ideaCards: [], links: "", createdAt: Date.now() };
     onPlansChange([plan, ...plans]);
     setActivePlanId(plan.id);
@@ -224,11 +333,14 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
   return (
     <div className="flex h-full overflow-hidden">
       {/* ── Sidebar ── */}
-      <div className="w-60 flex-shrink-0 border-r border-[#d0d7de] bg-white flex flex-col">
+      <div className="w-60 flex-shrink-0 border-r border-[#d0d7de] bg-white flex flex-col pb-3">
         <div className="px-4 py-3 border-b border-[#d0d7de] flex items-center justify-between">
           <span className="text-xs font-semibold text-[#57606a] uppercase tracking-wider">Plans</span>
           <button
-            onClick={() => { setAddingNew(true); setNewTitle(""); }}
+            onClick={() => {
+              if (plans.length >= 5) { setLimitError(true); setTimeout(() => setLimitError(false), 3000); return; }
+              setAddingNew(true); setNewTitle("");
+            }}
             className="w-5 h-5 flex items-center justify-center rounded hover:bg-[#f6f8fa] text-[#57606a] hover:text-[#1f2328] transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
@@ -257,7 +369,16 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto">
+        {limitError && (
+          <div className="mx-3 mt-2 px-3 py-2 bg-[#fff1f0] border border-[#cf222e]/30 rounded-lg flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="#cf222e" className="flex-shrink-0">
+              <path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+            </svg>
+            <span className="text-[11px] text-[#cf222e] font-medium">Max 5 plans reached</span>
+          </div>
+        )}
+
+        <div className="overflow-y-auto">
           {plans.length === 0 && !addingNew && (
             <div className="px-4 py-8 text-center">
               <p className="text-xs text-[#8c959f]">No plans yet.</p>
@@ -268,9 +389,8 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
             <button
               key={plan.id}
               onClick={() => setActivePlanId(plan.id)}
-              className={`w-full text-left px-4 py-2.5 border-b border-[#f0f2f4] transition-colors group flex items-center justify-between gap-2 ${
-                plan.id === activePlanId ? "bg-[#f6f8fa] text-[#1f2328]" : "hover:bg-[#f6f8fa] text-[#57606a]"
-              }`}
+              className={`w-full text-left px-4 py-2.5 border-b border-[#f0f2f4] transition-colors group flex items-center justify-between gap-2 ${plan.id === activePlanId ? "bg-[#f6f8fa] text-[#1f2328]" : "hover:bg-[#f6f8fa] text-[#57606a]"
+                }`}
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm truncate font-medium">{plan.title}</p>
@@ -289,6 +409,7 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
             </button>
           ))}
         </div>
+        <FocusGraph plans={plans} />
       </div>
 
       {/* ── Detail area ── */}
