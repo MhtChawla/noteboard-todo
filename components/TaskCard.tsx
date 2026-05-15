@@ -10,6 +10,26 @@ interface Props {
   onDragStart: (id: string) => void;
 }
 
+function renderWithLinks(text: string) {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  return parts.map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="text-[#0969da] underline underline-offset-2 hover:text-[#0550ae] break-all"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function TaskCard({ task, onUpdate, onDelete, onDragStart }: Props) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
@@ -119,7 +139,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onDragStart }: Prop
             </div>
           </div>
           {task.description && (
-            <p className="text-xs text-[#57606a] mt-1.5 leading-relaxed line-clamp-3">{task.description}</p>
+            <p className="text-xs text-[#57606a] mt-1.5 leading-relaxed line-clamp-3">{renderWithLinks(task.description)}</p>
           )}
           <div className="mt-2.5 flex items-center gap-2">
             <span

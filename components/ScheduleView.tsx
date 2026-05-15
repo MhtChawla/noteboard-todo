@@ -26,7 +26,7 @@ export default function ScheduleView({ tasks, slots, dragTaskId, onDropToSlot, o
   const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]));
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden bg-white">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[#d0d7de] bg-white flex-shrink-0">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="#57606a">
