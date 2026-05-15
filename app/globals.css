@@ -58,3 +58,18 @@ input:focus, textarea:focus {
 .fade-in {
   animation: fadeIn 0.2s ease-out;
 }
+
+/* contenteditable placeholder */
+[contenteditable][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: #8c959f;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* links inside rich editors */
+[contenteditable] a {
+  color: #0969da;
+  text-decoration: underline;
+  cursor: pointer;
+}

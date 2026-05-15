@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Task, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
-import { loadTasks, saveTasks, loadScheduleSlots, saveScheduleSlots } from "@/lib/storage";
+import { Task, Plan, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
+import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots } from "@/lib/storage";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
@@ -15,6 +15,7 @@ function generateId() {
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"tasks" | "plans">("tasks");
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlots>({});
@@ -23,10 +24,16 @@ export default function Home() {
   useEffect(() => {
     const tasks = loadTasks();
     const slots = loadScheduleSlots();
-    // batch all initial state in one React transition to avoid the React 19
-    // "setState synchronously within an effect" warning
+    const rawPlans = loadPlans().map((p) => ({
+      ...p,
+      goals: p.goals ?? "",
+      body: p.body ?? "",
+      ideaCards: p.ideaCards ?? [],
+      links: p.links ?? "",
+    }));
     React.startTransition(() => {
       setTasks(tasks);
+      setPlans(rawPlans);
       setScheduleSlots(slots);
       setMounted(true);
     });
@@ -35,6 +42,12 @@ export default function Home() {
   useEffect(() => {
     if (mounted) saveTasks(tasks);
   }, [tasks, mounted]);
+
+  useEffect(() => {
+    if (mounted) savePlans(plans);
+  }, [plans, mounted]);
+
+  const onPlansChange = useCallback((next: Plan[]) => setPlans(next), []);
 
   const addTask = useCallback((status: Status, title: string, description: string) => {
     const task: Task = {
@@ -196,7 +209,7 @@ export default function Home() {
         {/* Plans tab */}
         {activeTab === "plans" && (
           <div className="flex-1 overflow-hidden">
-            <PlansView />
+            <PlansView plans={plans} onPlansChange={onPlansChange} />
           </div>
         )}
 
@@ -257,7 +270,7 @@ export default function Home() {
       </div>
 
       {/* Notes sidebar — always visible */}
-      <NotesPanel onAddTask={addTask} />
+      <NotesPanel onAddTask={addTask} plans={plans} onPlansChange={onPlansChange} />
     </div>
   );
 }

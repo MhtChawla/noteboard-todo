@@ -1,27 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { loadPlans, savePlans, loadPointers, savePointers, loadFutureTasks, saveFutureTasks } from "@/lib/storage";
-import { Plan, Pointer, FutureTask, Status } from "@/lib/types";
+import { loadPointers, savePointers, loadFutureTasks, saveFutureTasks } from "@/lib/storage";
+import { Plan, IdeaCard, Pointer, FutureTask, Status } from "@/lib/types";
 import RecurringTasksPanel from "./RecurringTasksPanel";
 
 function genId() {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
-interface Props {
-  onAddTask: (status: Status, title: string, description: string) => void;
+/** Convert HTML (from contenteditable) to plain text for textarea display */
+function htmlToPlain(html: string) {
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
 }
 
-export default function NotesPanel({ onAddTask }: Props) {
+interface Props {
+  onAddTask: (status: Status, title: string, description: string) => void;
+  plans: Plan[];
+  onPlansChange: (plans: Plan[]) => void;
+}
+
+export default function NotesPanel({ onAddTask, plans, onPlansChange }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [tab, setTab] = useState<"plans" | "pointers" | "recurring">("recurring");
 
-  const [plans, setPlans] = useState<Plan[]>(loadPlans);
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [newPlanTitle, setNewPlanTitle] = useState("");
-  const [editingPlan, setEditingPlan] = useState<string | null>(null);
-  const [editingPlanBody, setEditingPlanBody] = useState("");
+  const [quickIdea, setQuickIdea] = useState<Record<string, { title: string; desc: string }>>({});
 
   const [pointers, setPointers] = useState<Pointer[]>(loadPointers);
   const [newPtrLabel, setNewPtrLabel] = useState("");
@@ -33,29 +47,23 @@ export default function NotesPanel({ onAddTask }: Props) {
   function addPlan() {
     const title = newPlanTitle.trim();
     if (!title) return;
-    const updated = [{ id: genId(), title, body: "", createdAt: Date.now() }, ...plans];
-    setPlans(updated);
-    savePlans(updated);
+    onPlansChange([{ id: genId(), title, body: "", goals: "", ideaCards: [], links: "", createdAt: Date.now() }, ...plans]);
     setNewPlanTitle("");
   }
 
   function deletePlan(id: string) {
-    const updated = plans.filter((p) => p.id !== id);
-    setPlans(updated);
-    savePlans(updated);
+    onPlansChange(plans.filter((p) => p.id !== id));
     if (expandedPlan === id) setExpandedPlan(null);
   }
 
-  function startEditBody(plan: Plan) {
-    setEditingPlan(plan.id);
-    setEditingPlanBody(plan.body);
-  }
-
-  function saveBody(id: string) {
-    const updated = plans.map((p) => (p.id === id ? { ...p, body: editingPlanBody } : p));
-    setPlans(updated);
-    savePlans(updated);
-    setEditingPlan(null);
+  function dropIdea(planId: string) {
+    const title = (quickIdea[planId]?.title ?? "").trim();
+    if (!title) return;
+    const card: IdeaCard = { id: `card_${Date.now()}`, title, desc: quickIdea[planId]?.desc ?? "", createdAt: Date.now() };
+    onPlansChange(plans.map((p) =>
+      p.id === planId ? { ...p, ideaCards: [...(p.ideaCards ?? []), card] } : p
+    ));
+    setQuickIdea((prev) => ({ ...prev, [planId]: { title: "", desc: "" } }));
   }
 
   function addFutureTask() {
@@ -191,43 +199,37 @@ export default function NotesPanel({ onAddTask }: Props) {
                       </button>
                     </div>
 
-                    {/* Expanded body */}
+                    {/* Expanded — quick idea drop */}
                     {expandedPlan === plan.id && (
-                      <div className="px-2 pb-2">
-                        {editingPlan === plan.id ? (
-                          <div className="flex flex-col gap-1">
-                            <textarea
-                              autoFocus
-                              value={editingPlanBody}
-                              onChange={(e) => setEditingPlanBody(e.target.value)}
-                              rows={5}
-                              placeholder="Steps, notes, links…"
-                              className="w-full text-xs p-2 border border-[#0969da] rounded-md resize-none focus:outline-none focus:ring-1 focus:ring-[#0969da]/20"
-                              style={{ fontFamily: "inherit" }}
-                            />
-                            <div className="flex gap-1 justify-end">
-                              <button
-                                onClick={() => setEditingPlan(null)}
-                                className="text-[10px] px-2 py-0.5 border border-[#d0d7de] rounded hover:bg-[#f6f8fa] text-[#57606a]"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => saveBody(plan.id)}
-                                className="text-[10px] px-2 py-0.5 bg-[#1f2328] text-white rounded hover:bg-[#2d3748]"
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            onClick={() => startEditBody(plan)}
-                            className="text-[11px] text-[#57606a] leading-relaxed whitespace-pre-wrap cursor-text min-h-[28px] rounded-md p-1 hover:bg-[#f6f8fa] transition-colors"
-                          >
-                            {plan.body || <span className="text-[#adb5bd]">Click to add steps…</span>}
-                          </div>
+                      <div className="px-2 pb-2 flex flex-col gap-1.5">
+                        {(plan.ideaCards ?? []).length > 0 && (
+                          <p className="text-[10px] text-[#8c959f] px-1">
+                            {plan.ideaCards.length} idea{plan.ideaCards.length !== 1 ? "s" : ""} — open Plans tab to view
+                          </p>
                         )}
+                        <div className="flex flex-col gap-1">
+                          <input
+                            autoFocus
+                            value={quickIdea[plan.id]?.title ?? ""}
+                            onChange={(e) => setQuickIdea((prev) => ({ ...prev, [plan.id]: { ...prev[plan.id], title: e.target.value, desc: prev[plan.id]?.desc ?? "" } }))}
+                            onKeyDown={(e) => { if (e.key === "Enter") dropIdea(plan.id); }}
+                            placeholder="Idea title..."
+                            className="w-full text-xs px-2 py-1.5 border border-[#d0d7de] rounded-md focus:outline-none focus:border-[#f9c513] transition-colors placeholder-[#8c959f]"
+                          />
+                          <textarea
+                            value={quickIdea[plan.id]?.desc ?? ""}
+                            onChange={(e) => setQuickIdea((prev) => ({ ...prev, [plan.id]: { ...prev[plan.id], title: prev[plan.id]?.title ?? "", desc: e.target.value } }))}
+                            placeholder="Description (optional)..."
+                            rows={2}
+                            className="w-full text-xs px-2 py-1.5 border border-[#d0d7de] rounded-md focus:outline-none focus:border-[#f9c513] transition-colors placeholder-[#8c959f] resize-none"
+                          />
+                          <button
+                            onClick={() => dropIdea(plan.id)}
+                            className="w-full text-xs py-1.5 bg-[#1f2328] text-white rounded-md hover:bg-[#2d333b] transition-colors font-medium"
+                          >
+                            Drop idea
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

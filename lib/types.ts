@@ -1,9 +1,19 @@
 export type Status = "todo" | "progress" | "complete" | "blocked";
 
+export interface IdeaCard {
+  id: string;
+  title: string;
+  desc: string;
+  createdAt: number;
+}
+
 export interface Plan {
   id: string;
   title: string;
-  body: string;
+  body: string;       // legacy
+  goals: string;
+  ideaCards: IdeaCard[];
+  links: string;
   createdAt: number;
 }
 
