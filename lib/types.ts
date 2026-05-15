@@ -37,6 +37,9 @@ export interface FutureTask {
   createdAt: number;
 }
 
+// hour (8–20) → array of task IDs scheduled in that slot
+export type ScheduleSlots = Record<number, string[]>;
+
 export interface Column {
   id: Status;
   label: string;
