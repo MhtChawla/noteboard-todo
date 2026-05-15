@@ -88,6 +88,11 @@ export default function Home() {
     });
   }, [updateTask]);
 
+  const onCompleteSlot = useCallback((hour: number) => {
+    const ids = scheduleSlots[hour] ?? [];
+    ids.forEach((id) => updateTask(id, { status: "complete" }));
+  }, [scheduleSlots, updateTask]);
+
   const onRemoveFromSlot = useCallback((hour: number, taskId: string) => {
     updateTask(taskId, { status: "todo" });
     setScheduleSlots((prev) => {
@@ -189,6 +194,7 @@ export default function Home() {
                 dragTaskId={dragTaskId}
                 onDropToSlot={onDropToSlot}
                 onRemoveFromSlot={onRemoveFromSlot}
+                onCompleteSlot={onCompleteSlot}
               />
             </div>
           </div>

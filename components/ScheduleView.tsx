@@ -18,9 +18,10 @@ interface Props {
   dragTaskId: React.MutableRefObject<string | null>;
   onDropToSlot: (hour: number) => void;
   onRemoveFromSlot: (hour: number, taskId: string) => void;
+  onCompleteSlot: (hour: number) => void;
 }
 
-export default function ScheduleView({ tasks, slots, dragTaskId, onDropToSlot, onRemoveFromSlot }: Props) {
+export default function ScheduleView({ tasks, slots, dragTaskId, onDropToSlot, onRemoveFromSlot, onCompleteSlot }: Props) {
   const [dragOverHour, setDragOverHour] = useState<number | null>(null);
   const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]));
 
@@ -41,6 +42,7 @@ export default function ScheduleView({ tasks, slots, dragTaskId, onDropToSlot, o
           const slotTaskIds = slots[hour] ?? [];
           const slotTasks = slotTaskIds.map((id) => taskMap[id]).filter(Boolean);
           const isOver = dragOverHour === hour;
+          const isSlotComplete = slotTasks.length > 0 && slotTasks.every((t) => t.status === "complete");
 
           return (
             <div
@@ -60,7 +62,7 @@ export default function ScheduleView({ tasks, slots, dragTaskId, onDropToSlot, o
                 className="flex-1 min-h-[36px] rounded-lg border-2 border-dashed flex flex-wrap gap-1.5 p-1.5 transition-all duration-150"
                 style={{
                   borderColor: isOver ? "#54aeff" : "#d0d7de",
-                  background: isOver ? "#ddf4ff" : slotTasks.length > 0 ? "#fff8e1" : "transparent",
+                  background: isOver ? "#ddf4ff" : slotTasks.length > 0 ? (isSlotComplete ? "#f0fff4" : "#fff8e1") : "transparent",
                 }}
               >
                 {slotTasks.length === 0 && !isOver && (
@@ -71,20 +73,53 @@ export default function ScheduleView({ tasks, slots, dragTaskId, onDropToSlot, o
                 {slotTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center gap-1 bg-white border border-[#f9c513] rounded-md px-2 py-0.5 text-[11px] text-[#1f2328] font-medium shadow-sm group/chip"
+                    className="flex items-center gap-1 bg-white border rounded-md px-2 py-0.5 text-[11px] font-medium shadow-sm group/chip"
+                    style={{ borderColor: isSlotComplete ? "#2da44e" : "#f9c513" }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#9a6700] flex-shrink-0" />
-                    <span className="max-w-[160px] truncate">{task.title}</span>
-                    <button
-                      onClick={() => onRemoveFromSlot(hour, task.id)}
-                      className="opacity-0 group-hover/chip:opacity-100 text-[#cf222e] ml-0.5 leading-none transition-opacity hover:text-[#a40e26]"
-                      title="Remove from slot"
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: isSlotComplete ? "#2da44e" : "#9a6700" }} />
+                    <span
+                      className="max-w-[160px] truncate"
+                      style={{
+                        color: isSlotComplete ? "#57606a" : "#1f2328",
+                        textDecoration: isSlotComplete ? "line-through" : "none",
+                      }}
                     >
-                      ×
-                    </button>
+                      {task.title}
+                    </span>
+                    {!isSlotComplete && (
+                      <button
+                        onClick={() => onRemoveFromSlot(hour, task.id)}
+                        className="opacity-0 group-hover/chip:opacity-100 text-[#cf222e] ml-0.5 leading-none transition-opacity hover:text-[#a40e26]"
+                        title="Remove from slot"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
+
+              {/* Slot complete tick */}
+              {slotTasks.length > 0 && (
+                <button
+                  onClick={() => !isSlotComplete && onCompleteSlot(hour)}
+                  title={isSlotComplete ? "Slot completed" : "Mark all as complete"}
+                  className="flex-shrink-0 mt-1 transition-transform active:scale-90"
+                  style={{ cursor: isSlotComplete ? "default" : "pointer" }}
+                >
+                  {isSlotComplete ? (
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                      <circle cx="14" cy="14" r="13" fill="#2da44e" />
+                      <path d="M8 14.5l4 4 8-9" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                      <circle cx="14" cy="14" r="13" stroke="#d0d7de" strokeWidth="2" />
+                      <path d="M8 14.5l4 4 8-9" stroke="#d0d7de" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              )}
             </div>
           );
         })}
