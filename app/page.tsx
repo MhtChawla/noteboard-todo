@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Task, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
 import { loadTasks, saveTasks, loadScheduleSlots, saveScheduleSlots } from "@/lib/storage";
 import Column from "@/components/Column";
@@ -19,9 +19,15 @@ export default function Home() {
   const dragTaskId = useRef<string | null>(null);
 
   useEffect(() => {
-    setTasks(loadTasks());
-    setScheduleSlots(loadScheduleSlots());
-    setMounted(true);
+    const tasks = loadTasks();
+    const slots = loadScheduleSlots();
+    // batch all initial state in one React transition to avoid the React 19
+    // "setState synchronously within an effect" warning
+    React.startTransition(() => {
+      setTasks(tasks);
+      setScheduleSlots(slots);
+      setMounted(true);
+    });
   }, []);
 
   useEffect(() => {
