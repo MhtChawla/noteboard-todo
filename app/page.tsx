@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Task, Plan, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
-import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots } from "@/lib/storage";
+import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots, loadMergedBoundaries, saveMergedBoundaries } from "@/lib/storage";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
@@ -19,11 +19,13 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlots>({});
+  const [mergedBoundaries, setMergedBoundaries] = useState<number[]>([]);
   const dragTaskId = useRef<string | null>(null);
 
   useEffect(() => {
     const tasks = loadTasks();
     const slots = loadScheduleSlots();
+    const boundaries = loadMergedBoundaries();
     const rawPlans = loadPlans().map((p) => ({
       ...p,
       goals: p.goals ?? "",
@@ -35,6 +37,7 @@ export default function Home() {
       setTasks(tasks);
       setPlans(rawPlans);
       setScheduleSlots(slots);
+      setMergedBoundaries(boundaries);
       setMounted(true);
     });
   }, []);
@@ -107,6 +110,23 @@ export default function Home() {
     const ids = scheduleSlots[hour] ?? [];
     ids.forEach((id) => updateTask(id, { status: "complete" }));
   }, [scheduleSlots, updateTask]);
+
+  const onMergeBoundary = useCallback((hour: number) => {
+    setMergedBoundaries((prev) => {
+      if (prev.includes(hour)) return prev;
+      const next = [...prev, hour].sort((a, b) => a - b);
+      saveMergedBoundaries(next);
+      return next;
+    });
+  }, []);
+
+  const onUnmergeBoundary = useCallback((hour: number) => {
+    setMergedBoundaries((prev) => {
+      const next = prev.filter((h) => h !== hour);
+      saveMergedBoundaries(next);
+      return next;
+    });
+  }, []);
 
   const onRemoveFromSlot = useCallback((hour: number, taskId: string) => {
     updateTask(taskId, { status: "todo" });
@@ -239,9 +259,12 @@ export default function Home() {
                 tasks={tasks}
                 slots={scheduleSlots}
                 dragTaskId={dragTaskId}
+                mergedBoundaries={mergedBoundaries}
                 onDropToSlot={onDropToSlot}
                 onRemoveFromSlot={onRemoveFromSlot}
                 onCompleteSlot={onCompleteSlot}
+                onMergeBoundary={onMergeBoundary}
+                onUnmergeBoundary={onUnmergeBoundary}
               />
             </div>
           </div>

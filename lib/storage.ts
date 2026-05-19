@@ -102,3 +102,19 @@ export function loadScheduleSlots(): ScheduleSlots {
 export function saveScheduleSlots(slots: ScheduleSlots): void {
   localStorage.setItem(SCHEDULE_KEY, JSON.stringify(slots));
 }
+
+const MERGED_BOUNDARIES_KEY = "noteboard_merged_boundaries";
+
+export function loadMergedBoundaries(): number[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(MERGED_BOUNDARIES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveMergedBoundaries(boundaries: number[]): void {
+  localStorage.setItem(MERGED_BOUNDARIES_KEY, JSON.stringify(boundaries));
+}

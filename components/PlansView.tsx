@@ -278,6 +278,7 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
   const [addingNew, setAddingNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [limitError, setLimitError] = useState(false);
+  const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
 
   const activePlan = plans.find((p) => p.id === activePlanId) ?? plans[0] ?? null;
 
@@ -331,7 +332,7 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
   }, [plans, updatePlan]);
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full overflow-hidden relative">
       {/* ── Sidebar ── */}
       <div className="w-60 flex-shrink-0 border-r border-[#d0d7de] bg-white flex flex-col pb-3">
         <div className="px-4 py-3 border-b border-[#d0d7de] flex items-center justify-between">
@@ -385,32 +386,77 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
               <button onClick={() => setAddingNew(true)} className="mt-2 text-xs text-[#0969da] hover:underline">Create your first plan</button>
             </div>
           )}
-          {plans.map((plan) => (
-            <button
-              key={plan.id}
-              onClick={() => setActivePlanId(plan.id)}
-              className={`w-full text-left px-4 py-2.5 border-b border-[#f0f2f4] transition-colors group flex items-center justify-between gap-2 ${plan.id === activePlanId ? "bg-[#f6f8fa] text-[#1f2328]" : "hover:bg-[#f6f8fa] text-[#57606a]"
-                }`}
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm truncate font-medium">{plan.title}</p>
-                {(plan.ideaCards?.length ?? 0) > 0 && (
-                  <p className="text-[10px] text-[#8c959f]">{plan.ideaCards.length} idea{plan.ideaCards.length !== 1 ? "s" : ""}</p>
-                )}
-              </div>
-              <span
-                onClick={(e) => { e.stopPropagation(); deletePlan(plan.id); }}
-                className="opacity-0 group-hover:opacity-100 w-4 h-4 flex-shrink-0 text-[#8c959f] hover:text-[#cf222e] transition-all cursor-pointer"
+          {plans.map((plan, idx) => {
+            const planColor = PLAN_COLORS[idx % PLAN_COLORS.length];
+            return (
+              <button
+                key={plan.id}
+                onClick={() => setActivePlanId(plan.id)}
+                className={`w-full text-left px-4 py-2.5 border-b border-[#f0f2f4] transition-colors group flex items-center justify-between gap-2 ${plan.id === activePlanId ? "bg-[#f6f8fa] text-[#1f2328]" : "hover:bg-[#f6f8fa] text-[#57606a]"
+                  }`}
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z" />
-                </svg>
-              </span>
-            </button>
-          ))}
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: planColor }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate font-medium" style={{ color: plan.id === activePlanId ? planColor : undefined }}>{plan.title}</p>
+                    {(plan.ideaCards?.length ?? 0) > 0 && (
+                      <p className="text-[10px] text-[#8c959f]">{plan.ideaCards.length} idea{plan.ideaCards.length !== 1 ? "s" : ""}</p>
+                    )}
+                  </div>
+                </div>
+                <span
+                  onClick={(e) => { e.stopPropagation(); setDeletingPlanId(plan.id); }}
+                  className="opacity-0 group-hover:opacity-100 w-4 h-4 flex-shrink-0 text-[#8c959f] hover:text-[#cf222e] transition-all cursor-pointer"
+                >
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z" />
+                  </svg>
+                </span>
+              </button>
+            );
+          })}
         </div>
         <FocusGraph plans={plans} />
       </div>
+
+      {/* ── Delete confirmation modal ── */}
+      {deletingPlanId && (() => {
+        const plan = plans.find((p) => p.id === deletingPlanId);
+        if (!plan) return null;
+        return (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl border border-[#d0d7de] p-6 w-80 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#fff0ef] flex items-center justify-center flex-shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="#cf222e">
+                    <path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.149l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#1f2328]">Delete plan?</p>
+                  <p className="text-xs text-[#57606a] mt-0.5">
+                    &ldquo;<span className="font-medium">{plan.title}</span>&rdquo; will be permanently removed.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDeletingPlanId(null)}
+                  className="flex-1 text-sm py-1.5 border border-[#d0d7de] text-[#57606a] rounded-lg hover:bg-[#f6f8fa] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { deletePlan(deletingPlanId); setDeletingPlanId(null); }}
+                  className="flex-1 text-sm py-1.5 bg-[#cf222e] text-white rounded-lg hover:bg-[#a40e26] transition-colors font-medium"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Detail area ── */}
       <div className="flex-1 flex flex-col overflow-hidden bg-[#f6f8fa]">
@@ -421,7 +467,8 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
               <input
                 value={activePlan.title}
                 onChange={(e) => updatePlan(activePlan.id, { title: e.target.value })}
-                className="w-full text-2xl font-semibold text-[#1f2328] bg-transparent outline-none border-none placeholder-[#8c959f]"
+                className="w-full text-2xl font-semibold bg-transparent outline-none border-none placeholder-[#8c959f]"
+                style={{ color: PLAN_COLORS[plans.findIndex((p) => p.id === activePlan.id) % PLAN_COLORS.length] }}
                 placeholder="Plan title"
               />
               <p className="text-xs text-[#8c959f] mt-1">
