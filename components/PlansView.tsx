@@ -171,6 +171,73 @@ function genCardId() {
   return `card_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
+// ── Linkified textarea — view mode shows clickable URLs, click → edit ────────
+const URL_RE = /(https?:\/\/[^\s]+)/g;
+
+function linkify(text: string): React.ReactNode[] {
+  const parts = text.split(URL_RE);
+  return parts.map((part, i) =>
+    URL_RE.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="text-[#0969da] underline underline-offset-2 break-all hover:text-[#0860ca]"
+      >
+        {part}
+      </a>
+    ) : (
+      <React.Fragment key={i}>{part}</React.Fragment>
+    )
+  );
+}
+
+function IdeaDescField({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+
+  const startEdit = () => {
+    setEditing(true);
+    setTimeout(() => taRef.current?.focus(), 0);
+  };
+
+
+  if (editing) {
+    return (
+      <textarea
+        ref={taRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => setEditing(false)}
+        placeholder={placeholder}
+        className="flex-1 w-full text-xs text-[#57606a] bg-transparent outline-none resize-none leading-relaxed placeholder-[#c4a000]/40"
+        rows={6}
+      />
+    );
+  }
+
+  return (
+    <div
+      onClick={startEdit}
+      className="flex-1 w-full text-xs text-[#57606a] leading-relaxed cursor-text whitespace-pre-wrap break-words min-h-[84px]"
+    >
+      {value ? linkify(value) : (
+        <span className="text-[#c4a000]/40">{placeholder}</span>
+      )}
+    </div>
+  );
+}
+
 const PLAN_COLORS = ["#0969da", "#2da44e", "#9a6700", "#8250df", "#cf222e", "#0891b2"];
 
 function stripHtml(html: string) {
@@ -552,12 +619,10 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
                             </button>
                           </div>
                           <div className="w-full h-px bg-[#f9c513]/30" />
-                          <textarea
+                          <IdeaDescField
                             value={card.desc}
-                            onChange={(e) => updateIdeaCard(activePlan.id, card.id, { desc: e.target.value })}
+                            onChange={(v) => updateIdeaCard(activePlan.id, card.id, { desc: v })}
                             placeholder="Describe the idea..."
-                            className="flex-1 w-full text-xs text-[#57606a] bg-transparent outline-none resize-none leading-relaxed placeholder-[#c4a000]/40"
-                            rows={6}
                           />
                         </div>
                       ))
