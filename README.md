@@ -1,23 +1,48 @@
-# noteboard 🗂️
+# noteboard
 
-> your tasks. your notes. zero drama.
+> your tasks. your plans. your notes. zero drama.
 
-a clean, minimal kanban board that lives entirely in your browser. no accounts, no backend, no subscription. just open it and get to work.
+a clean, minimal workspace that lives entirely in your browser. no accounts, no backend, no subscription. just open it and get to work.
 
 ---
 
-## what's inside
+## preview
+
+![Noteboard task board preview](./Preview_1.png)
+
+![Noteboard schedule preview](./Preview_2.png)
+
+![Noteboard plans preview](./Preview_3.png)
+
+---
+
+## highlights
+
+- **kanban task board** with To Do, In Progress, Complete, and Blocked columns
+- **hour-wise schedule mode** for turning today's tasks into a simple timeline
+- **plans workspace** for goals, rich notes, idea cards, and useful links
+- **right-side command panel** for recurring tasks, future tasks, quick plans, and pointers
+- **local-first storage** with automatic saves in your browser
+- **native drag and drop** with no external UI framework or backend dependency
+
+---
+
+## features
 
 **4 columns that actually make sense**
 
 | column | vibe |
 |---|---|
-| 📋 To Do | the list that haunts you |
-| ⚡ In Progress | where things actually happen |
-| ✅ Complete | dopamine hits only |
-| 🚧 Blocked | honest about it, at least |
+| To Do | the list that haunts you |
+| In Progress | where things actually happen |
+| Complete | dopamine hits only |
+| Blocked | honest about it, at least |
 
-**+ a notes panel** on the right — completely separate from the board. personal scratch pad, brain dump, whatever you need.
+**schedule mode** lets you drag tasks into hourly slots, merge adjacent blocks, remove tasks from the day plan, and mark a whole slot complete.
+
+**plans** give bigger ideas a place to breathe: goals, notes, links, and small idea cards all live together.
+
+**workspace sidebar** keeps recurring tasks, future tasks, plans, and pointers close by without crowding the board.
 
 everything saves automatically to `localStorage`. refresh, close the tab, come back tomorrow — it's all there.
 
@@ -44,7 +69,11 @@ open [http://localhost:3000](http://localhost:3000) and you're done.
 
 **edit a task** — `···` menu → Edit, or just double-tap the card
 
-**notes** — click anywhere in the right panel and start typing. autosaves after 600ms. collapse it with the `<` button when you need more board space
+**schedule tasks** — switch on `Schedule hour-wise`, then drag tasks into the timeline
+
+**plan bigger work** — open the Plans tab for goals, notes, links, and idea cards
+
+**capture later work** — use the workspace sidebar for recurring tasks, future tasks, quick ideas, and pointers
 
 ---
 
@@ -64,18 +93,21 @@ zero external UI libraries. drag and drop is native HTML5.
 
 ```
 app/
-  page.tsx          ← all state lives here
+  page.tsx          <- main board state and layout
   layout.tsx
   globals.css
 
 components/
-  TaskCard.tsx      ← individual card (drag, edit, delete)
-  Column.tsx        ← drop zone + add task form
-  NotesPanel.tsx    ← the right sidebar
+  TaskCard.tsx              <- individual card actions
+  Column.tsx                <- drop zone + add task form
+  ScheduleView.tsx          <- hour-wise task schedule
+  PlansView.tsx             <- full plans workspace
+  NotesPanel.tsx            <- right workspace sidebar
+  RecurringTasksPanel.tsx   <- recurring task controls
 
 lib/
-  types.ts          ← Task type + COLUMNS config
-  storage.ts        ← localStorage read/write
+  types.ts          <- shared types + COLUMNS config
+  storage.ts        <- localStorage read/write
 ```
 
 see [`DEVELOPER_NOTES.md`](./DEVELOPER_NOTES.md) for architecture deep-dive.
