@@ -145,8 +145,9 @@ export default function Home() {
     );
   }
 
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.status === "complete").length;
+  const progressTasks = tasks.filter((t) => t.status !== "blocked");
+  const totalTasks = progressTasks.length;
+  const completedTasks = progressTasks.filter((t) => t.status === "complete").length;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f6f8fa]">
