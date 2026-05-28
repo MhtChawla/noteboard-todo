@@ -8,6 +8,7 @@ interface Props {
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDelete: (id: string) => void;
   onDragStart: (id: string) => void;
+  onSelect?: (id: string) => void;
 }
 
 function renderWithLinks(text: string) {
@@ -30,7 +31,7 @@ function renderWithLinks(text: string) {
   );
 }
 
-export default function TaskCard({ task, onUpdate, onDelete, onDragStart }: Props) {
+export default function TaskCard({ task, onUpdate, onDelete, onDragStart, onSelect }: Props) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDesc, setEditDesc] = useState(task.description);
@@ -93,12 +94,12 @@ export default function TaskCard({ task, onUpdate, onDelete, onDragStart }: Prop
           </div>
         </div>
       ) : (
-        <div className="p-3">
+        <div className="p-3" onClick={() => onSelect?.(task.id)}>
           <div className="flex items-start justify-between gap-2">
             <span className="text-sm font-medium text-[#1f2328] flex-1 leading-snug">{task.title}</span>
             <div className="relative flex-shrink-0" ref={menuRef}>
               <button
-                onClick={() => setShowMenu((v) => !v)}
+                onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
                 className="opacity-0 group-hover:opacity-100 text-[#57606a] hover:text-[#1f2328] transition-all p-0.5 rounded hover:bg-[#f6f8fa]"
               >
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">

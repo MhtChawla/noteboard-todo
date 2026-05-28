@@ -13,10 +13,11 @@ interface Props {
   onDeleteAllTasks: (status: Status) => void;
   onDragStart: (taskId: string) => void;
   onDrop: (status: Status) => void;
+  onSelectTask?: (taskId: string) => void;
 }
 
 export default function Column({
-  column, tasks, onAddTask, onUpdateTask, onDeleteTask, onDeleteAllTasks, onDragStart, onDrop,
+  column, tasks, onAddTask, onUpdateTask, onDeleteTask, onDeleteAllTasks, onDragStart, onDrop, onSelectTask,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -84,6 +85,7 @@ export default function Column({
             onUpdate={onUpdateTask}
             onDelete={onDeleteTask}
             onDragStart={onDragStart}
+            onSelect={onSelectTask}
           />
         ))}
 

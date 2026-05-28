@@ -7,6 +7,7 @@ import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
 import PlansView from "@/components/PlansView";
+import TaskDetailPanel from "@/components/TaskDetailPanel";
 
 function generateId() {
   return `task_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -14,6 +15,7 @@ function generateId() {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"tasks" | "plans">("tasks");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [plansOverview, setPlansOverview] = useState("");
@@ -59,6 +61,7 @@ export default function Home() {
 
   const onPlansChange = useCallback((next: Plan[]) => setPlans(next), []);
   const onOverviewChange = useCallback((text: string) => setPlansOverview(text), []);
+  const onSelectTask = useCallback((id: string) => { setSelectedTaskId(id); setActiveTab("tasks"); }, []);
 
   const addTask = useCallback((status: Status, title: string, description: string) => {
     const task: Task = {
@@ -160,7 +163,7 @@ export default function Home() {
   return (
     <div className="flex h-screen overflow-hidden bg-[#f6f8fa]">
       {/* Main board */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-3 bg-white border-b border-[#d0d7de] flex-shrink-0">
           <div className="flex items-center gap-4">
@@ -176,9 +179,9 @@ export default function Home() {
             {/* Tabs */}
             <div className="flex items-center gap-0.5 bg-[#f6f8fa] rounded-md p-0.5 border border-[#d0d7de]">
               <button
-                onClick={() => setActiveTab("tasks")}
+                onClick={() => { setActiveTab("tasks"); setSelectedTaskId(null); }}
                 className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  activeTab === "tasks"
+                  activeTab === "tasks" && !selectedTaskId
                     ? "bg-white text-[#1f2328] shadow-sm"
                     : "text-[#57606a] hover:text-[#1f2328]"
                 }`}
@@ -186,7 +189,7 @@ export default function Home() {
                 Tasks
               </button>
               <button
-                onClick={() => setActiveTab("plans")}
+                onClick={() => { setActiveTab("plans"); setSelectedTaskId(null); }}
                 className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                   activeTab === "plans"
                     ? "bg-white text-[#1f2328] shadow-sm"
@@ -258,6 +261,7 @@ export default function Home() {
                   onDeleteAllTasks={deleteAllTasks}
                   onDragStart={onDragStart}
                   onDrop={onDrop}
+                  onSelectTask={onSelectTask}
                 />
               ))}
             </div>
@@ -274,6 +278,7 @@ export default function Home() {
                 onCompleteSlot={onCompleteSlot}
                 onMergeBoundary={onMergeBoundary}
                 onUnmergeBoundary={onUnmergeBoundary}
+                onSelectTask={onSelectTask}
               />
             </div>
           </div>
@@ -292,6 +297,7 @@ export default function Home() {
                       onDeleteAllTasks={deleteAllTasks}
                       onDragStart={onDragStart}
                       onDrop={onDrop}
+                      onSelectTask={onSelectTask}
                     />
                   </div>
                 </div>
@@ -299,6 +305,15 @@ export default function Home() {
             </div>
           </div>
         ) : null}
+
+        {/* Task detail drawer — overlays the board */}
+        {activeTab === "tasks" && (
+          <TaskDetailPanel
+            task={tasks.find((t) => t.id === selectedTaskId) ?? null}
+            onUpdate={updateTask}
+            onClose={() => setSelectedTaskId(null)}
+          />
+        )}
       </div>
 
       {/* Notes sidebar — always visible */}
