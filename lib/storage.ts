@@ -118,3 +118,14 @@ export function loadMergedBoundaries(): number[] {
 export function saveMergedBoundaries(boundaries: number[]): void {
   localStorage.setItem(MERGED_BOUNDARIES_KEY, JSON.stringify(boundaries));
 }
+
+const PLANS_OVERVIEW_KEY = "noteboard_plans_overview";
+
+export function loadPlansOverview(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(PLANS_OVERVIEW_KEY) ?? "";
+}
+
+export function savePlansOverview(text: string): void {
+  localStorage.setItem(PLANS_OVERVIEW_KEY, text);
+}

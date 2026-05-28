@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Task, Plan, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
-import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots, loadMergedBoundaries, saveMergedBoundaries } from "@/lib/storage";
+import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots, loadMergedBoundaries, saveMergedBoundaries, loadPlansOverview, savePlansOverview } from "@/lib/storage";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
@@ -16,6 +16,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"tasks" | "plans">("tasks");
   const [tasks, setTasks] = useState<Task[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansOverview, setPlansOverview] = useState("");
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlots>({});
@@ -33,9 +34,11 @@ export default function Home() {
       ideaCards: p.ideaCards ?? [],
       links: p.links ?? "",
     }));
+    const overview = loadPlansOverview();
     React.startTransition(() => {
       setTasks(tasks);
       setPlans(rawPlans);
+      setPlansOverview(overview);
       setScheduleSlots(slots);
       setMergedBoundaries(boundaries);
       setMounted(true);
@@ -50,7 +53,12 @@ export default function Home() {
     if (mounted) savePlans(plans);
   }, [plans, mounted]);
 
+  useEffect(() => {
+    if (mounted) savePlansOverview(plansOverview);
+  }, [plansOverview, mounted]);
+
   const onPlansChange = useCallback((next: Plan[]) => setPlans(next), []);
+  const onOverviewChange = useCallback((text: string) => setPlansOverview(text), []);
 
   const addTask = useCallback((status: Status, title: string, description: string) => {
     const task: Task = {
@@ -230,7 +238,7 @@ export default function Home() {
         {/* Plans tab */}
         {activeTab === "plans" && (
           <div className="flex-1 overflow-hidden">
-            <PlansView plans={plans} onPlansChange={onPlansChange} />
+            <PlansView plans={plans} onPlansChange={onPlansChange} overview={plansOverview} onOverviewChange={onOverviewChange} />
           </div>
         )}
 

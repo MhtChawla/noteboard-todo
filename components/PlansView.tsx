@@ -339,8 +339,20 @@ function FocusGraph({ plans }: { plans: Plan[] }) {
   );
 }
 
+const OVERVIEW_SENTINEL = "__overview__";
+
 // ── Main Plans view ──────────────────────────────────────────────────────────
-export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onPlansChange: (plans: Plan[]) => void }) {
+export default function PlansView({
+  plans,
+  onPlansChange,
+  overview,
+  onOverviewChange,
+}: {
+  plans: Plan[];
+  onPlansChange: (plans: Plan[]) => void;
+  overview: string;
+  onOverviewChange: (text: string) => void;
+}) {
   const [activePlanId, setActivePlanId] = useState<string | null>(() => plans[0]?.id ?? null);
   const [addingNew, setAddingNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -416,6 +428,24 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
             </svg>
           </button>
         </div>
+
+        {/* Overview tab */}
+        <button
+          onClick={() => setActivePlanId(OVERVIEW_SENTINEL)}
+          className={`w-full text-left px-4 py-2 border-b border-[#d0d7de] flex items-center gap-2 transition-colors ${
+            activePlanId === OVERVIEW_SENTINEL
+              ? "bg-[#f0f8ff] text-[#0969da]"
+              : "hover:bg-[#f6f8fa] text-[#57606a]"
+          }`}
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
+            <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.062 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" />
+          </svg>
+          <span className="text-xs font-semibold">Overview</span>
+          {overview.trim().length > 0 && (
+            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#0969da] flex-shrink-0" />
+          )}
+        </button>
 
         {addingNew && (
           <div className="px-3 py-2 border-b border-[#d0d7de]">
@@ -527,7 +557,25 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
 
       {/* ── Detail area ── */}
       <div className="flex-1 flex flex-col overflow-hidden bg-[#f6f8fa]">
-        {activePlan ? (
+        {activePlanId === OVERVIEW_SENTINEL ? (
+          <div className="flex-1 flex flex-col px-8 pt-6 pb-8 min-h-0">
+            <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="#0969da">
+                <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.062 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" />
+              </svg>
+              <h2 className="text-2xl font-semibold text-[#0969da]">Overview</h2>
+            </div>
+            <p className="text-xs text-[#8c959f] mb-5 flex-shrink-0">Your high-level goals & milestones across all plans</p>
+            <div className="flex-1 min-h-0 rounded-xl border border-[#0969da]/20 bg-[#f0f8ff] p-4 flex flex-col">
+              <textarea
+                value={overview}
+                onChange={(e) => onOverviewChange(e.target.value)}
+                placeholder="Drop your goals, milestones, big picture thinking here..."
+                className="flex-1 w-full bg-transparent outline-none resize-none text-sm text-[#1f2328] leading-relaxed placeholder-[#0969da]/30"
+              />
+            </div>
+          </div>
+        ) : activePlan ? (
           <>
             {/* Title */}
             <div className="px-8 pt-6 pb-4 flex-shrink-0">
