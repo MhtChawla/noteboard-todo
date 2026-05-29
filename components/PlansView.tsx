@@ -13,11 +13,13 @@ function RichEditor({
   onChange,
   placeholder,
   grow,
+  textSize = "text-sm",
 }: {
   value: string;
   onChange: (html: string) => void;
   placeholder: string;
   grow?: boolean;
+  textSize?: string;
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -95,13 +97,27 @@ function RichEditor({
   return (
     <div ref={containerRef} className={`relative ${grow ? "flex-1 flex flex-col min-h-0" : ""}`}>
 
-      {/* Phase 1 — link icon pill */}
+      {/* Phase 1 — toolbar pill (bold + link) */}
       {phase === "icon" && (
         <div
           style={{ top: pos.top, left: pos.left, transform: "translateX(-50%)" }}
           className="absolute z-50 bg-[#1f2328] rounded-md shadow-lg flex items-center"
           onMouseDown={(e) => e.preventDefault()}
         >
+          <button
+            onClick={() => {
+              const sel = window.getSelection();
+              if (sel && savedRange.current) { sel.removeAllRanges(); sel.addRange(savedRange.current); }
+              document.execCommand("bold");
+              if (editorRef.current) onChange(editorRef.current.innerHTML);
+              setPhase(null);
+            }}
+            className="flex items-center px-2.5 py-1.5 text-white hover:bg-white/10 rounded-md transition-colors"
+            title="Bold (⌘B)"
+          >
+            <span className="font-bold text-sm leading-none">B</span>
+          </button>
+          <div className="w-px h-3.5 bg-white/20" />
           <button
             onClick={openInput}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-white hover:bg-white/10 rounded-md transition-colors"
@@ -155,13 +171,21 @@ function RichEditor({
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
+        spellCheck={false}
         data-placeholder={placeholder}
         onFocus={() => { isFocused.current = true; }}
         onBlur={() => { isFocused.current = false; }}
         onInput={() => { if (editorRef.current) onChange(editorRef.current.innerHTML); }}
         onMouseUp={checkSelection}
         onKeyUp={checkSelection}
-        className={`outline-none text-sm text-[#1f2328] leading-relaxed ${grow ? "flex-1 overflow-y-auto" : ""}`}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+            e.preventDefault();
+            document.execCommand("bold");
+            if (editorRef.current) onChange(editorRef.current.innerHTML);
+          }
+        }}
+        className={`outline-none ${textSize} text-[#1f2328] leading-relaxed ${grow ? "flex-1 overflow-y-auto" : ""}`}
       />
     </div>
   );
@@ -413,7 +437,7 @@ export default function PlansView({
   return (
     <div className="flex h-full overflow-hidden relative">
       {/* ── Sidebar ── */}
-      <div className="w-60 flex-shrink-0 border-r border-[#d0d7de] bg-white flex flex-col pb-3">
+      <div className="ui-sans w-60 flex-shrink-0 border-r border-[#d0d7de] bg-white flex flex-col pb-3">
         <div className="px-4 py-3 border-b border-[#d0d7de] flex items-center justify-between">
           <span className="text-xs font-semibold text-[#57606a] uppercase tracking-wider">Plans</span>
           <button
@@ -567,11 +591,13 @@ export default function PlansView({
             </div>
             <p className="text-xs text-[#8c959f] mb-5 flex-shrink-0">Your high-level goals & milestones across all plans</p>
             <div className="flex-1 min-h-0 rounded-xl border border-[#0969da]/20 bg-[#f0f8ff] p-4 flex flex-col">
-              <textarea
+              <RichEditor
+                key="overview"
                 value={overview}
-                onChange={(e) => onOverviewChange(e.target.value)}
+                onChange={onOverviewChange}
                 placeholder="Drop your goals, milestones, big picture thinking here..."
-                className="flex-1 w-full bg-transparent outline-none resize-none text-sm text-[#1f2328] leading-relaxed placeholder-[#0969da]/30"
+                textSize="text-[12px]"
+                grow
               />
             </div>
           </div>
@@ -606,6 +632,7 @@ export default function PlansView({
                   value={activePlan.goals ?? ""}
                   onChange={(v) => updatePlan(activePlan.id, { goals: v })}
                   placeholder="What do you want to achieve?"
+                  textSize="text-[12px]"
                 />
               </div>
 

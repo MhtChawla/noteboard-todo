@@ -113,7 +113,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange }: Props) {
 
   return (
     <div
-      className="flex flex-col bg-white border-l border-[#d0d7de] transition-all duration-200"
+      className="ui-sans flex flex-col bg-white border-l border-[#d0d7de] transition-all duration-200"
       style={{ width: collapsed ? "44px" : "260px", minWidth: collapsed ? "44px" : "260px" }}
     >
       {/* Header */}

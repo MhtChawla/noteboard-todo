@@ -21,6 +21,7 @@ export default function Home() {
   const [plansOverview, setPlansOverview] = useState("");
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
+  const [devFont, setDevFont] = useState(true);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlots>({});
   const [mergedBoundaries, setMergedBoundaries] = useState<number[]>([]);
   const dragTaskId = useRef<string | null>(null);
@@ -37,6 +38,8 @@ export default function Home() {
       links: p.links ?? "",
     }));
     const overview = loadPlansOverview();
+    const storedFont = localStorage.getItem("devFont");
+    const initialDevFont = storedFont !== "false";
     React.startTransition(() => {
       setTasks(tasks);
       setPlans(rawPlans);
@@ -44,6 +47,7 @@ export default function Home() {
       setScheduleSlots(slots);
       setMergedBoundaries(boundaries);
       setMounted(true);
+      setDevFont(initialDevFont);
     });
   }, []);
 
@@ -161,7 +165,7 @@ export default function Home() {
   const completedTasks = progressTasks.filter((t) => t.status === "complete").length;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f8fa]">
+    <div className={`flex h-screen overflow-hidden bg-[#f6f8fa] ${devFont ? "" : "font-default"}`}>
       {/* Main board */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Header */}
@@ -222,7 +226,7 @@ export default function Home() {
                 {/* Schedule toggle */}
                 <button
                   onClick={() => setScheduleMode((v) => !v)}
-                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-colors ${
+                  className={`ui-sans flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-colors ${
                     scheduleMode
                       ? "bg-[#1f2328] text-white border-[#1f2328]"
                       : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa] hover:text-[#1f2328]"
@@ -235,6 +239,24 @@ export default function Home() {
                 </button>
               </>
             )}
+
+            {/* Font mode toggle */}
+            <button
+              onClick={() => setDevFont((v) => {
+                const next = !v;
+                localStorage.setItem("devFont", String(next));
+                return next;
+              })}
+              title={devFont ? "Switch to default font" : "Switch to dev font (monospace)"}
+              className={`flex items-center gap-1.5 px-2.5 py-0 h-[29px] rounded-md border text-[11px] font-medium transition-colors ${
+                devFont
+                  ? "bg-[#1f2328] text-white border-[#1f2328]"
+                  : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
+              }`}
+              style={{ fontFamily: "Menlo, Monaco, monospace" }}
+            >
+              🧑‍💻 dev-mode
+            </button>
           </div>
         </header>
 
@@ -247,7 +269,7 @@ export default function Home() {
 
         {/* Board */}
         {activeTab === "tasks" && scheduleMode ? (
-          <div className="flex-1 flex overflow-hidden">
+          <div className="ui-sans flex-1 flex overflow-hidden">
             {/* Todo column */}
             <div className="flex flex-col w-72 flex-shrink-0 h-full border-r border-[#d0d7de] overflow-y-auto p-4">
               {COLUMNS.filter((c) => c.id === "todo").map((col) => (
@@ -283,7 +305,7 @@ export default function Home() {
             </div>
           </div>
         ) : activeTab === "tasks" ? (
-          <div className="flex-1 overflow-x-auto overflow-y-hidden">
+          <div className="ui-sans flex-1 overflow-x-auto overflow-y-hidden">
             <div className="flex gap-4 p-6 h-full" style={{ minWidth: "fit-content" }}>
               {COLUMNS.map((col) => (
                 <div key={col.id} className="flex flex-col w-64 flex-shrink-0 h-full">
