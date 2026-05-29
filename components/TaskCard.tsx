@@ -109,7 +109,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onDragStart, onSele
               {showMenu && (
                 <div className="absolute right-0 top-6 z-50 bg-white border border-[#d0d7de] rounded-lg shadow-lg py-1 min-w-[130px] fade-in">
                   <button
-                    onClick={() => { setEditing(true); setShowMenu(false); }}
+                    onClick={(e) => { e.stopPropagation(); setEditing(true); setShowMenu(false); }}
                     className="w-full text-left text-xs px-3 py-1.5 hover:bg-[#f6f8fa] text-[#1f2328] transition-colors"
                   >
                     Edit
