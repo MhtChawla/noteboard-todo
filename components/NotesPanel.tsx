@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { loadPointers, savePointers, loadFutureTasks, saveFutureTasks } from "@/lib/storage";
+import { useState, useEffect } from "react";
+import { loadAllData, savePointers, saveFutureTasks } from "@/lib/storage";
 import { Plan, IdeaCard, Pointer, FutureTask, Status } from "@/lib/types";
 import RecurringTasksPanel from "./RecurringTasksPanel";
 
@@ -38,12 +38,19 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   const [newPlanTitle, setNewPlanTitle] = useState("");
   const [quickIdea, setQuickIdea] = useState<Record<string, { title: string; desc: string }>>({});
 
-  const [pointers, setPointers] = useState<Pointer[]>(loadPointers);
+  const [pointers, setPointers] = useState<Pointer[]>([]);
   const [newPtrLabel, setNewPtrLabel] = useState("");
   const [newPtrHref, setNewPtrHref] = useState("");
 
-  const [futureTasks, setFutureTasks] = useState<FutureTask[]>(loadFutureTasks);
+  const [futureTasks, setFutureTasks] = useState<FutureTask[]>([]);
   const [newFutureTitle, setNewFutureTitle] = useState("");
+
+  useEffect(() => {
+    loadAllData().then((data) => {
+      setPointers(data.pointers);
+      setFutureTasks(data.futureTasks);
+    });
+  }, []);
 
   function addPlan() {
     const title = newPlanTitle.trim();

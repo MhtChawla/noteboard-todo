@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Task, Plan, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
-import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots, loadMergedBoundaries, saveMergedBoundaries, loadPlansOverview, savePlansOverview, loadNotes } from "@/lib/storage";
+import { loadAllData, saveTasks, savePlans, saveScheduleSlots, saveMergedBoundaries, savePlansOverview } from "@/lib/storage";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
@@ -29,32 +29,29 @@ export default function Home() {
   const dragTaskId = useRef<string | null>(null);
 
   useEffect(() => {
-    const tasks = loadTasks();
-    const slots = loadScheduleSlots();
-    const boundaries = loadMergedBoundaries();
-    const rawPlans = loadPlans().map((p) => ({
-      ...p,
-      goals: p.goals ?? "",
-      body: p.body ?? "",
-      ideaCards: p.ideaCards ?? [],
-      links: p.links ?? "",
-    }));
-    const overview = loadPlansOverview();
-    const notes = loadNotes();
-    const storedFont = localStorage.getItem("devFont");
-    const initialDevFont = storedFont !== "false";
-    const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const initialTheme = storedTheme ?? "light";
-    React.startTransition(() => {
-      setTasks(tasks);
-      setPlans(rawPlans);
-      setPlansOverview(overview);
-      setRoughNotes(notes);
-      setScheduleSlots(slots);
-      setMergedBoundaries(boundaries);
-      setMounted(true);
-      setDevFont(initialDevFont);
-      setTheme(initialTheme);
+    loadAllData().then((data) => {
+      const rawPlans = data.plans.map((p) => ({
+        ...p,
+        goals: p.goals ?? "",
+        body: p.body ?? "",
+        ideaCards: p.ideaCards ?? [],
+        links: p.links ?? "",
+      }));
+      const storedFont = localStorage.getItem("devFont");
+      const initialDevFont = storedFont !== "false";
+      const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+      const initialTheme = storedTheme ?? "light";
+      React.startTransition(() => {
+        setTasks(data.tasks);
+        setPlans(rawPlans);
+        setPlansOverview(data.plansOverview);
+        setRoughNotes(data.notes);
+        setScheduleSlots(data.scheduleSlots);
+        setMergedBoundaries(data.mergedBoundaries);
+        setMounted(true);
+        setDevFont(initialDevFont);
+        setTheme(initialTheme);
+      });
     });
   }, []);
 
