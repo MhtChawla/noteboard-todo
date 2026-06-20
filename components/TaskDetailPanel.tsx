@@ -69,9 +69,8 @@ export default function TaskDetailPanel({ task, onUpdate, onClose }: Props) {
 
       {/* Drawer */}
       <div
-        className="absolute top-0 left-0 bottom-0 z-40 flex flex-col bg-white border-r border-[#d0d7de] shadow-2xl task-detail-panel"
+        className="absolute top-0 left-0 bottom-0 z-40 flex flex-col bg-white border-r border-[#d0d7de] shadow-2xl task-detail-panel w-full md:w-[70%]"
         style={{
-          width: "70%",
           transform: visible ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.22s cubic-bezier(0.16,1,0.3,1)",
         }}

@@ -26,6 +26,7 @@ export default function Home() {
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlots>({});
   const [mergedBoundaries, setMergedBoundaries] = useState<number[]>([]);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const dragTaskId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -179,26 +180,26 @@ export default function Home() {
   const completedTasks = progressTasks.filter((t) => t.status === "complete").length;
 
   return (
-    <div className={`flex h-screen overflow-hidden ${theme === "dark" ? "dark bg-[#282a36] text-[#f8f8f2]" : "bg-[#f6f8fa]"} ${devFont ? "" : "font-default"}`}>
+    <div className={`flex flex-col md:flex-row h-screen overflow-hidden ${theme === "dark" ? "dark bg-[#282a36] text-[#f8f8f2]" : "bg-[#f6f8fa]"} ${devFont ? "" : "font-default"}`}>
       {/* Main board */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-3 bg-white border-b border-[#d0d7de] flex-shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 bg-[#1f2328] rounded-lg flex items-center justify-center">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="white">
+        <header className="flex items-center justify-between px-3 md:px-6 py-2 md:py-3 bg-white border-b border-[#d0d7de] flex-shrink-0">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-1.5 md:gap-2.5">
+              <div className="w-6 h-6 md:w-7 md:h-7 bg-[#1f2328] rounded-lg flex items-center justify-center">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="white" className="md:w-[14px] md:h-[14px]">
                   <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" />
                 </svg>
               </div>
-              <h1 className="text-sm font-semibold text-[#1f2328]">Noteboard</h1>
+              <h1 className="text-xs md:text-sm font-semibold text-[#1f2328] hidden sm:block">Noteboard</h1>
             </div>
 
             {/* Tabs */}
             <div className="flex items-center gap-0.5 bg-[#f6f8fa] rounded-md p-0.5 border border-[#d0d7de]">
               <button
                 onClick={() => { setActiveTab("tasks"); setSelectedTaskId(null); }}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeTab === "tasks" && !selectedTaskId
+                className={`px-2 md:px-3 py-1 text-[11px] md:text-xs font-medium rounded transition-colors ${activeTab === "tasks" && !selectedTaskId
                     ? "bg-white text-[#1f2328] shadow-sm"
                     : "text-[#57606a] hover:text-[#1f2328]"
                   }`}
@@ -207,7 +208,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => { setActiveTab("plans"); setSelectedTaskId(null); }}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeTab === "plans"
+                className={`px-2 md:px-3 py-1 text-[11px] md:text-xs font-medium rounded transition-colors ${activeTab === "plans"
                     ? "bg-white text-[#1f2328] shadow-sm"
                     : "text-[#57606a] hover:text-[#1f2328]"
                   }`}
@@ -217,12 +218,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {activeTab === "tasks" && (
               <>
-                {/* Progress bar */}
+                {/* Progress bar — hidden on mobile */}
                 {totalTasks > 0 && (
-                  <div className="flex items-center gap-3">
+                  <div className="hidden md:flex items-center gap-3">
                     <div className="w-32 h-1.5 bg-[#eaeef2] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#2da44e] rounded-full transition-all duration-500"
@@ -235,10 +236,17 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Schedule toggle */}
+                {/* Progress — mobile only (compact) */}
+                {totalTasks > 0 && (
+                  <span className="md:hidden text-[10px] text-[#57606a] tabular-nums font-medium">
+                    {Math.round((completedTasks / totalTasks) * 100)}%
+                  </span>
+                )}
+
+                {/* Schedule toggle — hidden on mobile */}
                 <button
                   onClick={() => setScheduleMode((v) => !v)}
-                  className={`ui-sans flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-colors ${scheduleMode
+                  className={`ui-sans hidden md:flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-colors ${scheduleMode
                       ? "bg-[#1f2328] text-white border-[#1f2328]"
                       : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa] hover:text-[#1f2328]"
                     }`}
@@ -265,7 +273,7 @@ export default function Home() {
                 }`}
             />
 
-            {/* Font mode toggle */}
+            {/* Font mode toggle — hidden on mobile */}
             <button
               onClick={() => setDevFont((v) => {
                 const next = !v;
@@ -273,13 +281,27 @@ export default function Home() {
                 return next;
               })}
               title={devFont ? "Switch to default font" : "Switch to dev font (monospace)"}
-              className={`flex items-center gap-1.5 px-2.5 py-0 h-[29px] rounded-md border text-[11px] font-medium transition-colors ${devFont
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-0 h-[29px] rounded-md border text-[11px] font-medium transition-colors ${devFont
                   ? "bg-[#1f2328] text-white border-[#1f2328]"
                   : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
                 }`}
               style={{ fontFamily: "Menlo, Monaco, monospace" }}
             >
               🧑‍💻 dev-mode
+            </button>
+
+            {/* Workspace toggle — mobile only */}
+            <button
+              onClick={() => setSidebarOpen((v) => !v)}
+              className={`md:hidden w-7 h-7 flex items-center justify-center rounded-md border transition-colors ${sidebarOpen
+                  ? "bg-[#1f2328] text-white border-[#1f2328]"
+                  : "text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
+                }`}
+              title="Workspace"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M0 3.75C0 2.784.784 2 1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25Zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25ZM3.5 6.25a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1-.75-.75Zm.75 2.25h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1 0-1.5Z"/>
+              </svg>
             </button>
           </div>
         </header>
@@ -329,11 +351,11 @@ export default function Home() {
             </div>
           </div>
         ) : activeTab === "tasks" ? (
-          <div className="ui-sans flex-1 overflow-x-auto overflow-y-hidden">
-            <div className="flex gap-4 p-6 h-full" style={{ minWidth: "fit-content" }}>
+          <div className="ui-sans flex-1 overflow-y-auto md:overflow-y-hidden md:overflow-x-auto">
+            <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6 md:h-full" style={{ minWidth: "fit-content" }}>
               {COLUMNS.map((col) => (
-                <div key={col.id} className="flex flex-col w-64 flex-shrink-0 h-full">
-                  <div className="flex-1 overflow-y-auto pr-0.5">
+                <div key={col.id} className="flex flex-col w-full md:w-64 md:flex-shrink-0 md:h-full">
+                  <div className="md:flex-1 md:overflow-y-auto md:pr-0.5">
                     <Column
                       column={col}
                       tasks={tasks.filter((t) => t.status === col.id)}
@@ -362,8 +384,18 @@ export default function Home() {
         )}
       </div>
 
-      {/* Notes sidebar — always visible */}
-      <NotesPanel onAddTask={addTask} plans={plans} onPlansChange={onPlansChange} theme={theme} />
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Notes sidebar — always visible on desktop, slide-over on mobile */}
+      <div className={`fixed md:static inset-y-0 right-0 z-50 transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`}>
+        <NotesPanel onAddTask={addTask} plans={plans} onPlansChange={onPlansChange} theme={theme} />
+      </div>
     </div>
   );
 }
