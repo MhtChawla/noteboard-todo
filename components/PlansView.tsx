@@ -262,7 +262,8 @@ function IdeaDescField({
   );
 }
 
-const PLAN_COLORS = ["#0969da", "#2da44e", "#9a6700", "#8250df", "#cf222e", "#0891b2"];
+const LIGHT_COLORS = ["#0969da", "#2da44e", "#9a6700", "#8250df", "#cf222e", "#0891b2"];
+const DARK_COLORS = ["#bd93f9", "#50fa7b", "#ffb86c", "#ff79c6", "#ff5555", "#8be9fd"];
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, "").trim();
@@ -278,10 +279,11 @@ function computeFocusScore(plan: Plan): number {
   return Math.max(1, goalsWords + ideaCount);
 }
 
-function FocusGraph({ plans }: { plans: Plan[] }) {
+function FocusGraph({ plans, theme }: { plans: Plan[]; theme: "light" | "dark" }) {
   const [hovered, setHovered] = useState<string | null>(null);
 
   const segments = useMemo(() => {
+    const colors = theme === "dark" ? DARK_COLORS : LIGHT_COLORS;
     if (plans.length === 0) return [];
     const scores = plans.map((p) => ({ id: p.id, title: p.title, score: computeFocusScore(p) }));
     const total = scores.reduce((s, x) => s + x.score, 0);
@@ -292,9 +294,9 @@ function FocusGraph({ plans }: { plans: Plan[] }) {
       const startAngle = cumAngle;
       cumAngle += angle;
       const endAngle = cumAngle;
-      return { ...x, fraction, startAngle, endAngle, color: PLAN_COLORS[i % PLAN_COLORS.length] };
+      return { ...x, fraction, startAngle, endAngle, color: colors[i % colors.length] };
     });
-  }, [plans]);
+  }, [plans, theme]);
 
   const cx = 80, cy = 80, R = 62, r = 38;
 
@@ -371,12 +373,15 @@ export default function PlansView({
   onPlansChange,
   overview,
   onOverviewChange,
+  theme = "light",
 }: {
   plans: Plan[];
   onPlansChange: (plans: Plan[]) => void;
   overview: string;
   onOverviewChange: (text: string) => void;
+  theme?: "light" | "dark";
 }) {
+  const colors = theme === "dark" ? DARK_COLORS : LIGHT_COLORS;
   const [activePlanId, setActivePlanId] = useState<string | null>(() => plans[0]?.id ?? null);
   const [addingNew, setAddingNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -508,7 +513,7 @@ export default function PlansView({
             </div>
           )}
           {plans.map((plan, idx) => {
-            const planColor = PLAN_COLORS[idx % PLAN_COLORS.length];
+            const planColor = colors[idx % colors.length];
             return (
               <button
                 key={plan.id}
@@ -537,7 +542,7 @@ export default function PlansView({
             );
           })}
         </div>
-        <FocusGraph plans={plans} />
+        <FocusGraph plans={plans} theme={theme} />
       </div>
 
       {/* ── Delete confirmation modal ── */}
@@ -609,7 +614,7 @@ export default function PlansView({
                 value={activePlan.title}
                 onChange={(e) => updatePlan(activePlan.id, { title: e.target.value })}
                 className="w-full text-2xl font-semibold bg-transparent outline-none border-none placeholder-[#8c959f]"
-                style={{ color: PLAN_COLORS[plans.findIndex((p) => p.id === activePlan.id) % PLAN_COLORS.length] }}
+                style={{ color: colors[plans.findIndex((p) => p.id === activePlan.id) % colors.length] }}
                 placeholder="Plan title"
               />
               <p className="text-xs text-[#8c959f] mt-1">

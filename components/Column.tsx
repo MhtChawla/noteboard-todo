@@ -74,8 +74,8 @@ export default function Column({
       <div
         className="flex-1 flex flex-col gap-2.5 rounded-xl p-2.5 min-h-[200px] transition-all duration-150 border-2"
         style={{
-          background: isDragOver ? "#ddf4ff" : column.color,
-          borderColor: isDragOver ? "#54aeff" : "transparent",
+          background: isDragOver ? "var(--drag-over-bg)" : column.color,
+          borderColor: isDragOver ? "var(--drag-over-border)" : "transparent",
         }}
       >
         {tasks.map((task) => (

@@ -60,7 +60,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onDragStart, onSele
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      className="fade-in bg-white rounded-lg border border-[#d0d7de] shadow-[0_1px_3px_rgba(31,35,40,0.06)] hover:shadow-[0_3px_8px_rgba(31,35,40,0.1)] transition-all duration-150 cursor-grab active:cursor-grabbing group"
+      className="fade-in bg-white rounded-lg border border-[#d0d7de] shadow-[0_1px_3px_rgba(31,35,40,0.06)] hover:shadow-[0_3px_8px_rgba(31,35,40,0.1)] transition-all duration-150 cursor-grab active:cursor-grabbing group task-card"
     >
       {editing ? (
         <div className="p-3 flex flex-col gap-2">
@@ -107,7 +107,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onDragStart, onSele
                 </svg>
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-6 z-50 bg-white border border-[#d0d7de] rounded-lg shadow-lg py-1 min-w-[130px] fade-in">
+                <div className="absolute right-0 top-6 z-50 bg-white border border-[#d0d7de] rounded-lg shadow-lg py-1 min-w-[130px] fade-in task-card-menu">
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditing(true); setShowMenu(false); }}
                     className="w-full text-left text-xs px-3 py-1.5 hover:bg-[#f6f8fa] text-[#1f2328] transition-colors"

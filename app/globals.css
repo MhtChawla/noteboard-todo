@@ -1,5 +1,39 @@
 @import "tailwindcss";
 
+:root {
+  --col-todo-bg: #eaeef2;
+  --col-todo-accent: #d0d7de;
+  --col-todo-dot: #57606a;
+  --col-progress-bg: #fff8e1;
+  --col-progress-accent: #f9c513;
+  --col-progress-dot: #9a6700;
+  --col-complete-bg: #f0fff4;
+  --col-complete-accent: #2da44e;
+  --col-complete-dot: #1a7f37;
+  --col-blocked-bg: #fff0ef;
+  --col-blocked-accent: #f85149;
+  --col-blocked-dot: #cf222e;
+  --drag-over-bg: #ddf4ff;
+  --drag-over-border: #54aeff;
+}
+
+.dark {
+  --col-todo-bg: #1e1f29;
+  --col-todo-accent: #6272a4;
+  --col-todo-dot: #8be9fd;
+  --col-progress-bg: #1e1f29;
+  --col-progress-accent: #bd93f9;
+  --col-progress-dot: #ffb86c;
+  --col-complete-bg: #1e1f29;
+  --col-complete-accent: #44475a;
+  --col-complete-dot: #50fa7b;
+  --col-blocked-bg: #1e1f29;
+  --col-blocked-accent: #6272a4;
+  --col-blocked-dot: #ff5555;
+  --drag-over-bg: #44475a;
+  --drag-over-border: #bd93f9;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -89,3 +123,550 @@ input:focus, textarea:focus {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* --- Dracula Theme Styles --- */
+.dark {
+  background-color: #282a36 !important;
+  color: #f8f8f2 !important;
+}
+
+/* Base Body Override */
+body.dark {
+  background-color: #282a36 !important;
+  color: #f8f8f2 !important;
+}
+
+/* Scrollbars in Dark Mode */
+.dark ::-webkit-scrollbar-thumb {
+  background: #44475a !important;
+  border-radius: 4px !important;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6272a4 !important;
+}
+
+/* Layout Header & Shell */
+.dark header {
+  background-color: #191a21 !important;
+  border-color: #191a21 !important;
+  color: #f8f8f2 !important;
+}
+
+/* Headers & Containers */
+.dark .bg-white {
+  background-color: #21222c !important;
+  border-color: #191a21 !important;
+  color: #f8f8f2 !important;
+}
+
+.dark .border-b,
+.dark .border-r,
+.dark .border-l,
+.dark .border {
+  border-color: #191a21 !important;
+}
+
+/* Specific text overrides to bypass high Tailwind specificity */
+.dark .text-\[\#1f2328\],
+.dark .text-gray-900,
+.dark h1, .dark h2, .dark h3, .dark h4 {
+  color: #f8f8f2 !important;
+}
+
+.dark .text-\[\#57606a\],
+.dark .text-\[\#8c959f\],
+.dark .text-gray-500,
+.dark p {
+  color: #6272a4 !important;
+}
+
+/* Main Workspace Tab Container */
+.dark .bg-\[\#f6f8fa\] {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+}
+
+/* Inactive Tab Buttons */
+.dark button.text-\[\#57606a\],
+.dark button.text-gray-500 {
+  color: #6272a4 !important;
+}
+.dark button.text-\[\#57606a\]:hover,
+.dark button.text-gray-500:hover {
+  color: #f8f8f2 !important;
+  background-color: #44475a !important;
+}
+
+/* Active Tab Button */
+.dark button.bg-white.text-\[\#1f2328\].shadow-sm {
+  background-color: #282a36 !important;
+  color: #f8f8f2 !important;
+  border: 1px solid #44475a !important;
+}
+
+/* Progress bar inside header */
+.dark .bg-\[\#eaeef2\] {
+  background-color: #44475a !important;
+}
+.dark .bg-\[\#2da44e\] {
+  background-color: #50fa7b !important;
+}
+
+/* dev-mode toggle button */
+.dark button.bg-white.text-\[\#57606a\].border-\[\#d0d7de\] {
+  background-color: #21222c !important;
+  color: #bd93f9 !important;
+  border-color: #44475a !important;
+}
+.dark button.bg-white.text-\[\#57606a\].border-\[\#d0d7de\]:hover {
+  background-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+.dark button.bg-\[\#1f2328\].text-white {
+  background-color: #bd93f9 !important;
+  color: #282a36 !important;
+  border-color: #bd93f9 !important;
+}
+
+/* Schedule toggle button */
+.dark button.bg-white.text-\[\#57606a\].border {
+  background-color: #21222c !important;
+  color: #f8f8f2 !important;
+  border-color: #44475a !important;
+}
+.dark button.bg-white.text-\[\#57606a\].border:hover {
+  background-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+
+/* Input, Textareas, Selects */
+.dark input, 
+.dark textarea,
+.dark [contenteditable] {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+.dark input::placeholder, 
+.dark textarea::placeholder,
+.dark [contenteditable]::placeholder {
+  color: #6272a4 !important;
+}
+.dark input:focus, 
+.dark textarea:focus,
+.dark [contenteditable]:focus {
+  border-color: #bd93f9 !important;
+  box-shadow: 0 0 0 2px rgba(189, 147, 249, 0.2) !important;
+}
+
+/* Kanban Columns */
+.dark .flex-1.flex-col.w-64.h-full {
+  background-color: transparent !important;
+}
+.dark span.bg-\[\#eaeef2\].text-\[\#57606a\] {
+  background-color: #44475a !important;
+  color: #bd93f9 !important;
+}
+.dark button.text-\[\#57606a\]:hover {
+  background-color: #44475a !important;
+}
+
+/* Kanban Column Form Add Card */
+.dark .fade-in.bg-white.border-\[\#0969da\] {
+  background-color: #282a36 !important;
+  border-color: #bd93f9 !important;
+  box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.25) !important;
+}
+.dark .fade-in.bg-white.border-\[\#0969da\] input {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+.dark .fade-in.bg-white.border-\[\#0969da\] textarea {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border-top: 1px solid #44475a !important;
+}
+.dark .fade-in.bg-white.border-\[\#0969da\] button.bg-\[\#0969da\] {
+  background-color: #bd93f9 !important;
+  color: #282a36 !important;
+}
+.dark .fade-in.bg-white.border-\[\#0969da\] button.bg-\[\#0969da\]:hover {
+  background-color: #a87ff5 !important;
+}
+
+/* Dashed Add a Task trigger block */
+.dark button.border-dashed {
+  border-color: #44475a !important;
+  color: #6272a4 !important;
+}
+.dark button.border-dashed:hover {
+  border-color: #bd93f9 !important;
+  color: #f8f8f2 !important;
+}
+
+/* Task Cards */
+.dark .task-card {
+  background-color: #282a36 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+}
+.dark .task-card:hover {
+  border-color: #bd93f9 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+}
+.dark .task-card span.text-\[\#1f2328\] {
+  color: #f8f8f2 !important;
+}
+.dark .task-card p.text-\[\#57606a\] {
+  color: #6272a4 !important;
+}
+
+/* Cards inline edit mode inputs */
+.dark .task-card input,
+.dark .task-card textarea {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+.dark .task-card input:focus,
+.dark .task-card textarea:focus {
+  border-color: #bd93f9 !important;
+}
+.dark .task-card button.bg-\[\#1f2328\] {
+  background-color: #bd93f9 !important;
+  color: #282a36 !important;
+}
+.dark .task-card button.bg-\[\#1f2328\]:hover {
+  background-color: #a87ff5 !important;
+}
+
+/* 3-Dot Menus in TaskCard */
+.dark .task-card-menu {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6) !important;
+}
+.dark .task-card-menu button {
+  color: #f8f8f2 !important;
+}
+.dark .task-card-menu button:hover {
+  background-color: #44475a !important;
+}
+.dark .task-card-menu .border-t {
+  border-color: #44475a !important;
+}
+
+/* Task Detail Drawer Panel */
+.dark .task-detail-panel {
+  background-color: #21222c !important;
+  border-color: #191a21 !important;
+  color: #f8f8f2 !important;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5) !important;
+}
+.dark .task-detail-panel h2 {
+  color: #f8f8f2 !important;
+}
+.dark .task-detail-panel label {
+  color: #bd93f9 !important;
+}
+.dark .task-detail-panel input,
+.dark .task-detail-panel textarea {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+.dark .task-detail-panel input:focus,
+.dark .task-detail-panel textarea:focus {
+  border-color: #bd93f9 !important;
+}
+.dark .task-detail-panel button.bg-\[\#1f2328\] {
+  background-color: #bd93f9 !important;
+  color: #282a36 !important;
+}
+.dark .task-detail-panel button.bg-\[\#1f2328\]:hover {
+  background-color: #a87ff5 !important;
+}
+
+/* Plans Sidebar & Left Panel */
+.dark .w-60.flex-shrink-0.border-r.bg-white {
+  background-color: #21222c !important;
+  border-color: #191a21 !important;
+}
+.dark .w-60.flex-shrink-0.border-r.bg-white button {
+  color: #f8f8f2 !important;
+}
+
+/* Sidebar Overview Tab */
+.dark .bg-\[\#f0f8ff\].text-\[\#0969da\] {
+  background-color: #44475a !important;
+  color: #8be9fd !important;
+  border-color: #191a21 !important;
+}
+.dark .bg-\[\#f0f8ff\].text-\[\#0969da\] svg {
+  color: #8be9fd !important;
+}
+
+/* Sidebar plans buttons list */
+.dark .border-b.border-\[\#f0f2f4\] {
+  border-color: #191a21 !important;
+}
+.dark .border-b.border-\[\#f0f2f4\]:hover {
+  background-color: #44475a !important;
+}
+.dark .bg-\[\#f6f8fa\].text-\[\#1f2328\] {
+  background-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+
+/* Plans Detail Area */
+.dark .flex-1.flex.flex-col.overflow-hidden.bg-\[\#f6f8fa\] {
+  background-color: #282a36 !important;
+}
+.dark .bg-\[\#f6f8fa\] input.bg-transparent {
+  color: #f8f8f2 !important;
+}
+
+/* Goals & Milestones Box */
+.dark .bg-\[\#f0fff4\].border-\[\#2da44e\]\/30 {
+  background-color: #21222c !important;
+  border-color: #50fa7b !important;
+  border-width: 1px !important;
+}
+.dark .bg-\[\#f0fff4\] span.text-\[\#1a7f37\] {
+  color: #50fa7b !important;
+}
+.dark .bg-\[\#f0fff4\] svg {
+  fill: #50fa7b !important;
+}
+
+/* Ideas & Concepts Box */
+.dark .bg-\[\#fff8e1\].border-\[\#f9c513\]\/40 {
+  background-color: #21222c !important;
+  border-color: #ffb86c !important;
+  border-width: 1px !important;
+}
+.dark .bg-\[\#fff8e1\] span.text-\[\#9a6700\] {
+  color: #ffb86c !important;
+}
+.dark .bg-\[\#fff8e1\] svg {
+  fill: #ffb86c !important;
+}
+.dark .bg-\[\#fff8e1\] button.text-\[\#9a6700\] {
+  color: #ffb86c !important;
+}
+
+/* Overview Content Box */
+.dark .bg-\[\#f0f8ff\].border-\[\#0969da\]\/20 {
+  background-color: #21222c !important;
+  border-color: #8be9fd !important;
+  border-width: 1px !important;
+}
+.dark .bg-\[\#f0f8ff\] h2.text-\[\#0969da\] {
+  color: #8be9fd !important;
+}
+
+/* Idea Cards carousel items */
+.dark .bg-white.rounded-lg.border-\[\#f9c513\]\/50 {
+  background-color: #282a36 !important;
+  border-color: #44475a !important;
+}
+.dark .bg-white.rounded-lg.border-\[\#f9c513\]\/50 input {
+  color: #f8f8f2 !important;
+  background-color: transparent !important;
+  border: none !important;
+}
+.dark .bg-white.rounded-lg.border-\[\#f9c513\]\/50 .bg-\[\#f9c513\]\/30 {
+  background-color: #44475a !important;
+}
+.dark .bg-white.rounded-lg.border-\[\#f9c513\]\/50 span.text-\[\#c4a000\]\/40 {
+  color: #6272a4 !important;
+}
+.dark .bg-white.rounded-lg.border-\[\#f9c513\]\/50 div.cursor-text {
+  color: #f8f8f2 !important;
+}
+.dark .bg-white.rounded-lg.border-\[\#f9c513\]\/50 textarea {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+
+/* SVG ring graph legends */
+.dark text[fill="#57606a"] {
+  fill: #f8f8f2 !important;
+}
+.dark text[fill="#8c959f"] {
+  fill: #6272a4 !important;
+}
+
+/* Links inside RichEditor contenteditable and Plan descriptions */
+.dark [contenteditable] a,
+.dark a.underline,
+.dark .cursor-text a {
+  color: #8be9fd !important;
+  text-decoration-color: #8be9fd !important;
+}
+.dark [contenteditable] a:hover,
+.dark a.underline:hover,
+.dark .cursor-text a:hover {
+  color: #50fa7b !important;
+  text-decoration-color: #50fa7b !important;
+}
+
+/* WYSIWYG Popup formatting link icons */
+.dark .z-50.bg-\[\#1f2328\] {
+  background-color: #191a21 !important;
+  border: 1px solid #44475a !important;
+}
+.dark .z-50.bg-white {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+
+/* NotesPanel (Sidebar Right) */
+.dark .border-l {
+  border-color: #191a21 !important;
+}
+.dark .border-l.bg-white {
+  background-color: #21222c !important;
+}
+.dark .border-l.bg-white span.text-xs.font-semibold {
+  color: #f8f8f2 !important;
+}
+
+/* NotesPanel Tabs */
+.dark .border-l.bg-white .border-b {
+  border-color: #191a21 !important;
+}
+.dark .border-l.bg-white button.text-\[\#57606a\] {
+  color: #6272a4 !important;
+}
+.dark .border-l.bg-white button.text-\[\#57606a\]:hover {
+  color: #f8f8f2 !important;
+}
+.dark .border-l.bg-white button.text-\[\#0969da\].border-b-2 {
+  color: #bd93f9 !important;
+  border-color: #bd93f9 !important;
+}
+
+/* NotesPanel forms & inputs */
+.dark .border-l.bg-white input,
+.dark .border-l.bg-white textarea {
+  background-color: #282a36 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+.dark .border-l.bg-white button.bg-\[\#1f2328\] {
+  background-color: #bd93f9 !important;
+  color: #282a36 !important;
+}
+.dark .border-l.bg-white button.bg-\[\#1f2328\]:hover {
+  background-color: #a87ff5 !important;
+}
+
+/* NotesPanel list expanded rows */
+.dark .border-b.border-\%23f0f0f0,
+.dark .border-b.border-\[\#f0f0f0\] {
+  border-color: #191a21 !important;
+}
+.dark button.text-left.text-xs.font-medium {
+  color: #f8f8f2 !important;
+}
+.dark button.text-left.text-xs.font-medium:hover {
+  color: #bd93f9 !important;
+}
+
+/* RecurringTasks items */
+.dark ul.divide-y > li {
+  border-color: #191a21 !important;
+}
+.dark ul.divide-y > li:hover {
+  background-color: #44475a !important;
+}
+.dark ul.divide-y > li span.text-\[\#1f2328\] {
+  color: #f8f8f2 !important;
+}
+.dark .bg-\[\#fff8e1\].text-\[\#9a6700\] {
+  background-color: #44475a !important;
+  color: #ffb86c !important;
+}
+.dark .bg-\[\#f0f8ff\].text-\[\#0969da\] {
+  background-color: #44475a !important;
+  color: #8be9fd !important;
+}
+.dark .bg-\[\#f6f8fa\].border {
+  background-color: #282a36 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+.dark button.bg-\[\#2da44e\] {
+  background-color: #50fa7b !important;
+  color: #282a36 !important;
+}
+.dark button.bg-\[\#2da44e\]:hover {
+  background-color: #40c763 !important;
+}
+.dark button.bg-\[\#6e40c9\] {
+  background-color: #bd93f9 !important;
+  color: #282a36 !important;
+}
+.dark button.bg-\[\#6e40c9\]:hover {
+  background-color: #a87ff5 !important;
+}
+
+/* Rough NotesFullscreen textarea screen */
+.dark .p-6.bg-white {
+  background-color: #282a36 !important;
+}
+.dark .p-6.bg-white h2.text-gray-900 {
+  color: #f8f8f2 !important;
+}
+.dark .p-6.bg-white p.text-gray-500 {
+  color: #6272a4 !important;
+}
+.dark .p-6.bg-white textarea.border-gray-200 {
+  background-color: #191a21 !important;
+  border-color: #44475a !important;
+  color: #f8f8f2 !important;
+}
+
+/* Schedule slots timeline */
+.dark .bg-white.flex-shrink-0 {
+  background-color: #191a21 !important;
+}
+.dark .bg-white.h-full.overflow-hidden {
+  background-color: #282a36 !important;
+}
+.dark span.text-\[\#57606a\].tabular-nums {
+  color: #bd93f9 !important;
+}
+.dark .group\/chip {
+  background-color: #191a21 !important;
+  color: #f8f8f2 !important;
+  border-color: #44475a !important;
+}
+.dark .group\/chip span {
+  color: #f8f8f2 !important;
+}
+.dark .group\/chip span.cursor-pointer:hover {
+  color: #bd93f9 !important;
+}
+.dark circle[stroke="#d0d7de"] {
+  stroke: #44475a !important;
+}
+.dark path[stroke="#d0d7de"] {
+  stroke: #44475a !important;
+}
+.dark button.scale-110.opacity-100 {
+  background-color: #44475a !important;
+  border-color: #bd93f9 !important;
+  color: #bd93f9 !important;
+}
+
+/* Interactive DND transitions and overlays */
+.dark .column-drag-over {
+  background: #44475a !important;
+  border-color: #bd93f9 !important;
+}
+

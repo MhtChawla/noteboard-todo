@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Task, Plan, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
-import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots, loadMergedBoundaries, saveMergedBoundaries, loadPlansOverview, savePlansOverview } from "@/lib/storage";
+import { loadTasks, saveTasks, loadPlans, savePlans, loadScheduleSlots, saveScheduleSlots, loadMergedBoundaries, saveMergedBoundaries, loadPlansOverview, savePlansOverview, loadNotes } from "@/lib/storage";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
@@ -14,16 +14,18 @@ function generateId() {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"tasks" | "plans">("tasks");
+  const [activeTab, setActiveTab] = useState<"tasks" | "plans" | "roughNotes">("tasks");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [plansOverview, setPlansOverview] = useState("");
+  const [roughNotes, setRoughNotes] = useState("");
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [devFont, setDevFont] = useState(true);
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlots>({});
   const [mergedBoundaries, setMergedBoundaries] = useState<number[]>([]);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const dragTaskId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -38,18 +40,33 @@ export default function Home() {
       links: p.links ?? "",
     }));
     const overview = loadPlansOverview();
+    const notes = loadNotes();
     const storedFont = localStorage.getItem("devFont");
     const initialDevFont = storedFont !== "false";
+    const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const initialTheme = storedTheme ?? "light";
     React.startTransition(() => {
       setTasks(tasks);
       setPlans(rawPlans);
       setPlansOverview(overview);
+      setRoughNotes(notes);
       setScheduleSlots(slots);
       setMergedBoundaries(boundaries);
       setMounted(true);
       setDevFont(initialDevFont);
+      setTheme(initialTheme);
     });
   }, []);
+
+  useEffect(() => {
+    if (mounted && typeof window !== "undefined") {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, [theme, mounted]);
 
   useEffect(() => {
     if (mounted) saveTasks(tasks);
@@ -165,7 +182,7 @@ export default function Home() {
   const completedTasks = progressTasks.filter((t) => t.status === "complete").length;
 
   return (
-    <div className={`flex h-screen overflow-hidden bg-[#f6f8fa] ${devFont ? "" : "font-default"}`}>
+    <div className={`flex h-screen overflow-hidden ${theme === "dark" ? "dark bg-[#282a36] text-[#f8f8f2]" : "bg-[#f6f8fa]"} ${devFont ? "" : "font-default"}`}>
       {/* Main board */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Header */}
@@ -174,7 +191,7 @@ export default function Home() {
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 bg-[#1f2328] rounded-lg flex items-center justify-center">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="white">
-                  <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"/>
+                  <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" />
                 </svg>
               </div>
               <h1 className="text-sm font-semibold text-[#1f2328]">Noteboard</h1>
@@ -184,21 +201,19 @@ export default function Home() {
             <div className="flex items-center gap-0.5 bg-[#f6f8fa] rounded-md p-0.5 border border-[#d0d7de]">
               <button
                 onClick={() => { setActiveTab("tasks"); setSelectedTaskId(null); }}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  activeTab === "tasks" && !selectedTaskId
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeTab === "tasks" && !selectedTaskId
                     ? "bg-white text-[#1f2328] shadow-sm"
                     : "text-[#57606a] hover:text-[#1f2328]"
-                }`}
+                  }`}
               >
                 Tasks
               </button>
               <button
                 onClick={() => { setActiveTab("plans"); setSelectedTaskId(null); }}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  activeTab === "plans"
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${activeTab === "plans"
                     ? "bg-white text-[#1f2328] shadow-sm"
                     : "text-[#57606a] hover:text-[#1f2328]"
-                }`}
+                  }`}
               >
                 Plans
               </button>
@@ -226,19 +241,32 @@ export default function Home() {
                 {/* Schedule toggle */}
                 <button
                   onClick={() => setScheduleMode((v) => !v)}
-                  className={`ui-sans flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-colors ${
-                    scheduleMode
+                  className={`ui-sans flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-colors ${scheduleMode
                       ? "bg-[#1f2328] text-white border-[#1f2328]"
                       : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa] hover:text-[#1f2328]"
-                  }`}
+                    }`}
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z"/>
+                    <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z" />
                   </svg>
                   Schedule hour-wise
                 </button>
               </>
             )}
+
+            {/* Theme Toggle Dot */}
+            <button
+              onClick={() => setTheme((t) => {
+                const next = t === "light" ? "dark" : "light";
+                localStorage.setItem("theme", next);
+                return next;
+              })}
+              title={theme === "light" ? "Switch to Dark Mode (Dracula Theme)" : "Switch to Light Mode (Original)"}
+              className={`w-3.5 h-3.5 rounded-full transition-all duration-300 border focus:outline-none focus:ring-2 focus:ring-offset-2 ${theme === "light"
+                  ? "bg-[#f1fa8c] border-[#f9c513] hover:scale-110 shadow-sm cursor-pointer"
+                  : "bg-[#bd93f9] border-[#9b6ef3] hover:scale-110 shadow-md shadow-[#bd93f9]/20 cursor-pointer"
+                }`}
+            />
 
             {/* Font mode toggle */}
             <button
@@ -248,11 +276,10 @@ export default function Home() {
                 return next;
               })}
               title={devFont ? "Switch to default font" : "Switch to dev font (monospace)"}
-              className={`flex items-center gap-1.5 px-2.5 py-0 h-[29px] rounded-md border text-[11px] font-medium transition-colors ${
-                devFont
+              className={`flex items-center gap-1.5 px-2.5 py-0 h-[29px] rounded-md border text-[11px] font-medium transition-colors ${devFont
                   ? "bg-[#1f2328] text-white border-[#1f2328]"
                   : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
-              }`}
+                }`}
               style={{ fontFamily: "Menlo, Monaco, monospace" }}
             >
               🧑‍💻 dev-mode
@@ -263,7 +290,7 @@ export default function Home() {
         {/* Plans tab */}
         {activeTab === "plans" && (
           <div className="flex-1 overflow-hidden">
-            <PlansView plans={plans} onPlansChange={onPlansChange} overview={plansOverview} onOverviewChange={onOverviewChange} />
+            <PlansView plans={plans} onPlansChange={onPlansChange} overview={plansOverview} onOverviewChange={onOverviewChange} theme={theme} />
           </div>
         )}
 
@@ -339,7 +366,7 @@ export default function Home() {
       </div>
 
       {/* Notes sidebar — always visible */}
-      <NotesPanel onAddTask={addTask} plans={plans} onPlansChange={onPlansChange} />
+      <NotesPanel onAddTask={addTask} plans={plans} onPlansChange={onPlansChange} theme={theme} />
     </div>
   );
 }

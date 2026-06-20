@@ -27,9 +27,10 @@ interface Props {
   onAddTask: (status: Status, title: string, description: string) => void;
   plans: Plan[];
   onPlansChange: (plans: Plan[]) => void;
+  theme?: "light" | "dark";
 }
 
-export default function NotesPanel({ onAddTask, plans, onPlansChange }: Props) {
+export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "light" }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [tab, setTab] = useState<"plans" | "pointers" | "recurring">("recurring");
 
