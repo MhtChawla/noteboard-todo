@@ -131,7 +131,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   return (
     <div
       className="ui-sans flex flex-col bg-white border-l border-[#d0d7de] transition-all duration-200"
-      style={isMobile ? { width: "100vw", minWidth: "100vw", height: "100%" } : { width: collapsed ? "44px" : "260px", minWidth: collapsed ? "44px" : "260px" }}
+      style={isMobile ? { width: "100vw", minWidth: "100vw", height: "100%" } : { width: collapsed ? "44px" : "260px", minWidth: collapsed ? "44px" : "260px", height: "100%" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-[#d0d7de] flex-shrink-0">
