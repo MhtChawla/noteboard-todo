@@ -1,7 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { loadAllData, savePointers, saveFutureTasks } from "@/lib/storage";
+
+function useIsMobile() {
+  return useSyncExternalStore(
+    (cb) => { window.addEventListener("resize", cb); return () => window.removeEventListener("resize", cb); },
+    () => window.innerWidth < 768,
+    () => false,
+  );
+}
 import { Plan, IdeaCard, Pointer, FutureTask, Status } from "@/lib/types";
 import RecurringTasksPanel from "./RecurringTasksPanel";
 
@@ -31,6 +39,7 @@ interface Props {
 }
 
 export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "light" }: Props) {
+  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
   const [tab, setTab] = useState<"plans" | "pointers" | "recurring">("recurring");
 
@@ -122,16 +131,16 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   return (
     <div
       className="ui-sans flex flex-col bg-white border-l border-[#d0d7de] transition-all duration-200"
-      style={{ width: collapsed ? "44px" : "260px", minWidth: collapsed ? "44px" : "260px" }}
+      style={isMobile ? { width: "100vw", minWidth: "100vw", height: "100%" } : { width: collapsed ? "44px" : "260px", minWidth: collapsed ? "44px" : "260px" }}
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-[#d0d7de] flex-shrink-0">
-        {!collapsed && (
+        {(!collapsed || isMobile) && (
           <span className="text-xs font-semibold text-[#1f2328]">Workspace</span>
         )}
         <button
           onClick={() => setCollapsed((v) => !v)}
-          className="text-[#57606a] hover:text-[#1f2328] hover:bg-[#f6f8fa] rounded-md p-1 transition-colors flex-shrink-0"
+          className={`text-[#57606a] hover:text-[#1f2328] hover:bg-[#f6f8fa] rounded-md p-1 transition-colors flex-shrink-0 ${isMobile ? "hidden" : ""}`}
           title={collapsed ? "Expand" : "Collapse"}
         >
           <svg
@@ -143,7 +152,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
         </button>
       </div>
 
-      {!collapsed && (
+      {(!collapsed || isMobile) && (
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Tabs */}
           <div className="flex border-b border-[#d0d7de] flex-shrink-0">
@@ -382,7 +391,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
         </div>
       )}
 
-      {collapsed && (
+      {collapsed && !isMobile && (
         <div className="flex flex-col items-center pt-4 gap-3">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="#adb5bd">
             <path d="M0 3.75C0 2.784.784 2 1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25Zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25ZM3.5 6.25a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1-.75-.75Zm.75 2.25h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1 0-1.5Z"/>
