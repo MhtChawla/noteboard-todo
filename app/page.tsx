@@ -351,10 +351,10 @@ export default function Home() {
             </div>
           </div>
         ) : activeTab === "tasks" ? (
-          <div className="ui-sans flex-1 overflow-y-auto md:overflow-y-hidden md:overflow-x-auto">
-            <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6 h-full md:min-w-fit">
+          <div className="ui-sans flex-1 min-h-0 overflow-y-auto md:overflow-y-hidden md:overflow-x-auto">
+            <div className="flex flex-col md:flex-row gap-4 p-4 md:p-6 md:h-full" style={{ minWidth: "fit-content" }}>
               {COLUMNS.map((col) => (
-                <div key={col.id} className="flex flex-col w-full md:w-64 md:flex-shrink-0 h-auto md:h-full">
+                <div key={col.id} className="flex flex-col w-full md:w-64 md:flex-shrink-0 md:h-full">
                   <div className="md:flex-1 md:overflow-y-auto md:pr-0.5">
                     <Column
                       column={col}
