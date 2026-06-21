@@ -393,7 +393,7 @@ export default function Home() {
       )}
 
       {/* Notes sidebar — always visible on desktop, slide-over on mobile */}
-      <div className={`fixed md:static inset-y-0 right-0 z-50 transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`}>
+      <div className={`fixed md:static inset-y-0 right-0 z-50 h-full transition-transform duration-200 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`}>
         <NotesPanel onAddTask={addTask} plans={plans} onPlansChange={onPlansChange} theme={theme} />
       </div>
     </div>
