@@ -14,12 +14,12 @@ function generateId() {
 }
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"tasks" | "plans" | "roughNotes">("tasks");
+  const [activeTab, setActiveTab] = useState<"tasks" | "plans" | "notes">("tasks");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [plansOverview, setPlansOverview] = useState("");
-  const [roughNotes, setRoughNotes] = useState("");
+  const [notes, setNotes] = useState("");
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [devFont, setDevFont] = useState(true);
@@ -46,7 +46,7 @@ export default function Home() {
         setTasks(data.tasks);
         setPlans(rawPlans);
         setPlansOverview(data.plansOverview);
-        setRoughNotes(data.notes);
+        setNotes(data.notes);
         setScheduleSlots(data.scheduleSlots);
         setMergedBoundaries(data.mergedBoundaries);
         setMounted(true);
@@ -79,8 +79,8 @@ export default function Home() {
   }, [plansOverview, mounted]);
 
   useEffect(() => {
-    if (mounted) saveNotes(roughNotes);
-  }, [roughNotes, mounted]);
+    if (mounted) saveNotes(notes);
+  }, [notes, mounted]);
 
   const onPlansChange = useCallback((next: Plan[]) => setPlans(next), []);
   const onOverviewChange = useCallback((text: string) => setPlansOverview(text), []);
@@ -220,13 +220,13 @@ export default function Home() {
                 Plans
               </button>
               <button
-                onClick={() => { setActiveTab("roughNotes"); setSelectedTaskId(null); }}
-                className={`px-2 md:px-3 py-1 text-[11px] md:text-xs font-medium rounded transition-colors ${activeTab === "roughNotes"
+                onClick={() => { setActiveTab("notes"); setSelectedTaskId(null); }}
+                className={`px-2 md:px-3 py-1 text-[11px] md:text-xs font-medium rounded transition-colors ${activeTab === "notes"
                     ? "bg-white text-[#1f2328] shadow-sm"
                     : "text-[#57606a] hover:text-[#1f2328]"
                   }`}
               >
-                Rough Notes
+                Notes
               </button>
             </div>
           </div>
@@ -326,14 +326,14 @@ export default function Home() {
           </div>
         )}
 
-        {/* Rough Notes tab */}
-        {activeTab === "roughNotes" && (
-          <div className="flex-1 overflow-hidden p-4 md:p-6">
+        {/* Notes tab */}
+        {activeTab === "notes" && (
+          <div className="flex-1 overflow-hidden p-3 md:p-6">
             <textarea
-              value={roughNotes}
-              onChange={(e) => setRoughNotes(e.target.value)}
-              placeholder="Dump anything here..."
-              className="w-full h-full resize-none rounded-lg border border-[#d0d7de] bg-white p-4 text-sm leading-relaxed text-[#1f2328] placeholder:text-[#8b949e] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-transparent dark:bg-[#21222c] dark:border-[#44475a] dark:text-[#f8f8f2] dark:placeholder:text-[#6272a4]"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="rough notes, thoughts, links, anything..."
+              className="w-full h-full resize-none rounded-lg border border-[#d0d7de] bg-transparent p-3 md:p-4 text-sm leading-relaxed placeholder:text-[#8b949e] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-transparent"
             />
           </div>
         )}
