@@ -333,7 +333,7 @@ export default function Home() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="rough notes, thoughts, links, anything..."
-              className="w-full h-full resize-none rounded-lg border border-[#d0d7de] bg-transparent p-3 md:p-4 text-sm leading-relaxed placeholder:text-[#8b949e] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-transparent"
+              className="w-full h-full resize-none rounded-lg border border-[#e8d5a3] bg-[#fffef5] p-3 md:p-4 text-sm leading-relaxed placeholder:text-[#c4b078] focus:outline-none focus:ring-2 focus:ring-[#e0c96e] focus:border-transparent"
             />
           </div>
         )}
