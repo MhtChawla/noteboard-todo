@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Task, Plan, Status, COLUMNS, ScheduleSlots } from "@/lib/types";
-import { loadAllData, saveTasks, savePlans, saveScheduleSlots, saveMergedBoundaries, savePlansOverview } from "@/lib/storage";
+import { loadAllData, saveTasks, savePlans, saveScheduleSlots, saveMergedBoundaries, savePlansOverview, saveNotes } from "@/lib/storage";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
@@ -77,6 +77,10 @@ export default function Home() {
   useEffect(() => {
     if (mounted) savePlansOverview(plansOverview);
   }, [plansOverview, mounted]);
+
+  useEffect(() => {
+    if (mounted) saveNotes(roughNotes);
+  }, [roughNotes, mounted]);
 
   const onPlansChange = useCallback((next: Plan[]) => setPlans(next), []);
   const onOverviewChange = useCallback((text: string) => setPlansOverview(text), []);
@@ -215,6 +219,15 @@ export default function Home() {
               >
                 Plans
               </button>
+              <button
+                onClick={() => { setActiveTab("roughNotes"); setSelectedTaskId(null); }}
+                className={`px-2 md:px-3 py-1 text-[11px] md:text-xs font-medium rounded transition-colors ${activeTab === "roughNotes"
+                    ? "bg-white text-[#1f2328] shadow-sm"
+                    : "text-[#57606a] hover:text-[#1f2328]"
+                  }`}
+              >
+                Rough Notes
+              </button>
             </div>
           </div>
 
@@ -310,6 +323,18 @@ export default function Home() {
         {activeTab === "plans" && (
           <div className="flex-1 overflow-hidden">
             <PlansView plans={plans} onPlansChange={onPlansChange} overview={plansOverview} onOverviewChange={onOverviewChange} theme={theme} />
+          </div>
+        )}
+
+        {/* Rough Notes tab */}
+        {activeTab === "roughNotes" && (
+          <div className="flex-1 overflow-hidden p-4 md:p-6">
+            <textarea
+              value={roughNotes}
+              onChange={(e) => setRoughNotes(e.target.value)}
+              placeholder="Dump anything here..."
+              className="w-full h-full resize-none rounded-lg border border-[#d0d7de] bg-white p-4 text-sm leading-relaxed text-[#1f2328] placeholder:text-[#8b949e] focus:outline-none focus:ring-2 focus:ring-[#0969da] focus:border-transparent dark:bg-[#21222c] dark:border-[#44475a] dark:text-[#f8f8f2] dark:placeholder:text-[#6272a4]"
+            />
           </div>
         )}
 
