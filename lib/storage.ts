@@ -1,4 +1,4 @@
-import { Task, RecurringTask, Plan, Pointer, FutureTask, ScheduleSlots } from "./types";
+import { Task, RecurringTask, Plan, Pointer, FutureTask, ScheduleSlots, EisenhowerSlots } from "./types";
 
 const TASKS_KEY = "noteboard_tasks";
 const NOTES_KEY = "noteboard_notes";
@@ -117,4 +117,37 @@ export function loadMergedBoundaries(): number[] {
 
 export function saveMergedBoundaries(boundaries: number[]): void {
   localStorage.setItem(MERGED_BOUNDARIES_KEY, JSON.stringify(boundaries));
+}
+
+const EISENHOWER_SLOTS_KEY = "noteboard_eisenhower_slots";
+const EISENHOWER_CROSSED_KEY = "noteboard_eisenhower_crossed";
+
+const EMPTY_EISENHOWER: EisenhowerSlots = { do: [], schedule: [], delegate: [], eliminate: [] };
+
+export function loadEisenhowerSlots(): EisenhowerSlots {
+  if (typeof window === "undefined") return { ...EMPTY_EISENHOWER };
+  try {
+    const raw = localStorage.getItem(EISENHOWER_SLOTS_KEY);
+    return raw ? { ...EMPTY_EISENHOWER, ...JSON.parse(raw) } : { ...EMPTY_EISENHOWER };
+  } catch {
+    return { ...EMPTY_EISENHOWER };
+  }
+}
+
+export function saveEisenhowerSlots(slots: EisenhowerSlots): void {
+  localStorage.setItem(EISENHOWER_SLOTS_KEY, JSON.stringify(slots));
+}
+
+export function loadEisenhowerCrossed(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(EISENHOWER_CROSSED_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveEisenhowerCrossed(crossed: string[]): void {
+  localStorage.setItem(EISENHOWER_CROSSED_KEY, JSON.stringify(crossed));
 }

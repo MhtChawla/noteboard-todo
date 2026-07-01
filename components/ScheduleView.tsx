@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Task, ScheduleSlots } from "@/lib/types";
+import EisenhowerView from "./EisenhowerView";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8 AM to 8 PM
 
@@ -41,6 +42,7 @@ interface Props {
   onCompleteSlot: (hour: number) => void;
   onMergeBoundary: (hour: number) => void;
   onUnmergeBoundary: (hour: number) => void;
+  onUpdateTask: (id: string, updates: Partial<Task>) => void;
 }
 
 export default function ScheduleView({
@@ -53,9 +55,11 @@ export default function ScheduleView({
   onCompleteSlot,
   onMergeBoundary,
   onUnmergeBoundary,
+  onUpdateTask,
 }: Props) {
   const [dragOverHour, setDragOverHour] = useState<number | null>(null);
   const [hoveredBetween, setHoveredBetween] = useState<number | null>(null);
+  const [eisenhower, setEisenhower] = useState(false);
   const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]));
   const visualSlots = buildVisualSlots(mergedBoundaries);
   const boundarySet = new Set(mergedBoundaries);
@@ -69,10 +73,19 @@ export default function ScheduleView({
         </svg>
         <span className="text-xs font-semibold text-[#1f2328]">Today&apos;s Schedule</span>
         <span className="text-[10px] text-[#8c959f] ml-1">drag todos into a slot · click ↕ between slots to merge</span>
+        <label className="flex items-center gap-1.5 ml-auto cursor-pointer select-none">
+          <input type="checkbox" className="w-3.5 h-3.5 accent-[#1f2328]" checked={eisenhower} onChange={(e) => setEisenhower(e.target.checked)} />
+          <span className="text-[11px] text-[#57606a] font-medium">Eisenhower Matrix</span>
+        </label>
       </div>
 
+      {/* Eisenhower Matrix */}
+      {eisenhower && (
+        <EisenhowerView tasks={tasks} dragTaskId={dragTaskId} onUpdateTask={onUpdateTask} />
+      )}
+
       {/* Slots */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-0">
+      {!eisenhower && <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-0">
         {visualSlots.map((vslot, vIdx) => {
           const startH = vslot.hours[0];
           const endH = vslot.hours[vslot.hours.length - 1] + 1;
@@ -214,7 +227,7 @@ export default function ScheduleView({
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }

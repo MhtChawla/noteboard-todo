@@ -50,6 +50,9 @@ export interface FutureTask {
 // hour (8–20) → array of task IDs scheduled in that slot
 export type ScheduleSlots = Record<number, string[]>;
 
+export type EisenhowerQuadrant = "do" | "schedule" | "delegate" | "eliminate";
+export type EisenhowerSlots = Record<EisenhowerQuadrant, string[]>;
+
 export interface Column {
   id: Status;
   label: string;
