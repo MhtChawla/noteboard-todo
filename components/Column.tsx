@@ -13,10 +13,11 @@ interface Props {
   onDeleteAllTasks: (status: Status) => void;
   onDragStart: (taskId: string) => void;
   onDrop: (status: Status) => void;
+  onSelectTask?: (taskId: string) => void;
 }
 
 export default function Column({
-  column, tasks, onAddTask, onUpdateTask, onDeleteTask, onDeleteAllTasks, onDragStart, onDrop,
+  column, tasks, onAddTask, onUpdateTask, onDeleteTask, onDeleteAllTasks, onDragStart, onDrop, onSelectTask,
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -73,8 +74,8 @@ export default function Column({
       <div
         className="flex-1 flex flex-col gap-2.5 rounded-xl p-2.5 min-h-[200px] transition-all duration-150 border-2"
         style={{
-          background: isDragOver ? "#ddf4ff" : column.color,
-          borderColor: isDragOver ? "#54aeff" : "transparent",
+          background: isDragOver ? "var(--drag-over-bg)" : column.color,
+          borderColor: isDragOver ? "var(--drag-over-border)" : "transparent",
         }}
       >
         {tasks.map((task) => (
@@ -84,6 +85,7 @@ export default function Column({
             onUpdate={onUpdateTask}
             onDelete={onDeleteTask}
             onDragStart={onDragStart}
+            onSelect={onSelectTask}
           />
         ))}
 

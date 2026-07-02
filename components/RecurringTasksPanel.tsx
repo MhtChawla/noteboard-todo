@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RecurringTask, RecurInterval, Status } from "@/lib/types";
-import { loadRecurringTasks, saveRecurringTasks } from "@/lib/storage";
+import { loadAllData, saveRecurringTasks } from "@/lib/storage";
 
 function generateId() {
   return `rt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -13,9 +13,13 @@ interface Props {
 }
 
 export default function RecurringTasksPanel({ onAddTask }: Props) {
-  const [items, setItems] = useState<RecurringTask[]>(loadRecurringTasks);
+  const [items, setItems] = useState<RecurringTask[]>([]);
   const [input, setInput] = useState("");
   const [interval, setInterval] = useState<RecurInterval>("1D");
+
+  useEffect(() => {
+    loadAllData().then((data) => setItems(data.recurringTasks));
+  }, []);
 
   function add() {
     const title = input.trim();

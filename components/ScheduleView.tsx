@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Task, ScheduleSlots } from "@/lib/types";
+import { Task, ScheduleSlots, EisenhowerSlots } from "@/lib/types";
 import EisenhowerView from "./EisenhowerView";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8 AM to 8 PM
@@ -43,6 +43,9 @@ interface Props {
   onMergeBoundary: (hour: number) => void;
   onUnmergeBoundary: (hour: number) => void;
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
+  onSelectTask?: (taskId: string) => void;
+  eisenhowerSlots: EisenhowerSlots;
+  eisenhowerCrossed: string[];
 }
 
 export default function ScheduleView({
@@ -56,6 +59,9 @@ export default function ScheduleView({
   onMergeBoundary,
   onUnmergeBoundary,
   onUpdateTask,
+  onSelectTask,
+  eisenhowerSlots,
+  eisenhowerCrossed,
 }: Props) {
   const [dragOverHour, setDragOverHour] = useState<number | null>(null);
   const [hoveredBetween, setHoveredBetween] = useState<number | null>(null);
@@ -81,7 +87,7 @@ export default function ScheduleView({
 
       {/* Eisenhower Matrix */}
       {eisenhower && (
-        <EisenhowerView tasks={tasks} dragTaskId={dragTaskId} onUpdateTask={onUpdateTask} />
+        <EisenhowerView tasks={tasks} dragTaskId={dragTaskId} onUpdateTask={onUpdateTask} initialSlots={eisenhowerSlots} initialCrossed={eisenhowerCrossed} />
       )}
 
       {/* Slots */}
@@ -156,11 +162,12 @@ export default function ScheduleView({
                       >
                         <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: isSlotComplete ? "#2da44e" : "#9a6700" }} />
                         <span
-                          className="max-w-[160px] truncate"
+                          className="max-w-[160px] truncate cursor-pointer hover:underline"
                           style={{
                             color: isSlotComplete ? "#57606a" : "#1f2328",
                             textDecoration: isSlotComplete ? "line-through" : "none",
                           }}
+                          onClick={() => onSelectTask?.(task.id)}
                         >
                           {task.title}
                         </span>

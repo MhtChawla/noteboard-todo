@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Task, EisenhowerQuadrant, EisenhowerSlots } from "@/lib/types";
-import { loadEisenhowerSlots, saveEisenhowerSlots, loadEisenhowerCrossed, saveEisenhowerCrossed } from "@/lib/storage";
+import { saveEisenhowerSlots, saveEisenhowerCrossed } from "@/lib/storage";
 
 const QUADRANTS: {
   id: EisenhowerQuadrant;
@@ -22,11 +22,15 @@ interface Props {
   tasks: Task[];
   dragTaskId: React.MutableRefObject<string | null>;
   onUpdateTask: (id: string, updates: Partial<Task>) => void;
+  initialSlots: EisenhowerSlots;
+  initialCrossed: string[];
 }
 
-export default function EisenhowerView({ tasks, dragTaskId, onUpdateTask }: Props) {
-  const [slots, setSlots] = useState<EisenhowerSlots>(loadEisenhowerSlots);
-  const [crossed, setCrossed] = useState<string[]>(loadEisenhowerCrossed);
+const EMPTY_EISENHOWER: EisenhowerSlots = { do: [], schedule: [], delegate: [], eliminate: [] };
+
+export default function EisenhowerView({ tasks, dragTaskId, onUpdateTask, initialSlots, initialCrossed }: Props) {
+  const [slots, setSlots] = useState<EisenhowerSlots>(() => ({ ...EMPTY_EISENHOWER, ...initialSlots }));
+  const [crossed, setCrossed] = useState<string[]>(() => initialCrossed);
   const [dragOver, setDragOver] = useState<EisenhowerQuadrant | null>(null);
 
   const taskMap = Object.fromEntries(tasks.map((t) => [t.id, t]));

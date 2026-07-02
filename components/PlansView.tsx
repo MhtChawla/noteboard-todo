@@ -13,11 +13,13 @@ function RichEditor({
   onChange,
   placeholder,
   grow,
+  textSize = "text-sm",
 }: {
   value: string;
   onChange: (html: string) => void;
   placeholder: string;
   grow?: boolean;
+  textSize?: string;
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -95,13 +97,27 @@ function RichEditor({
   return (
     <div ref={containerRef} className={`relative ${grow ? "flex-1 flex flex-col min-h-0" : ""}`}>
 
-      {/* Phase 1 — link icon pill */}
+      {/* Phase 1 — toolbar pill (bold + link) */}
       {phase === "icon" && (
         <div
           style={{ top: pos.top, left: pos.left, transform: "translateX(-50%)" }}
           className="absolute z-50 bg-[#1f2328] rounded-md shadow-lg flex items-center"
           onMouseDown={(e) => e.preventDefault()}
         >
+          <button
+            onClick={() => {
+              const sel = window.getSelection();
+              if (sel && savedRange.current) { sel.removeAllRanges(); sel.addRange(savedRange.current); }
+              document.execCommand("bold");
+              if (editorRef.current) onChange(editorRef.current.innerHTML);
+              setPhase(null);
+            }}
+            className="flex items-center px-2.5 py-1.5 text-white hover:bg-white/10 rounded-md transition-colors"
+            title="Bold (⌘B)"
+          >
+            <span className="font-bold text-sm leading-none">B</span>
+          </button>
+          <div className="w-px h-3.5 bg-white/20" />
           <button
             onClick={openInput}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-white hover:bg-white/10 rounded-md transition-colors"
@@ -155,13 +171,21 @@ function RichEditor({
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
+        spellCheck={false}
         data-placeholder={placeholder}
         onFocus={() => { isFocused.current = true; }}
         onBlur={() => { isFocused.current = false; }}
         onInput={() => { if (editorRef.current) onChange(editorRef.current.innerHTML); }}
         onMouseUp={checkSelection}
         onKeyUp={checkSelection}
-        className={`outline-none text-sm text-[#1f2328] leading-relaxed ${grow ? "flex-1 overflow-y-auto" : ""}`}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+            e.preventDefault();
+            document.execCommand("bold");
+            if (editorRef.current) onChange(editorRef.current.innerHTML);
+          }
+        }}
+        className={`outline-none ${textSize} text-[#1f2328] leading-relaxed ${grow ? "flex-1 overflow-y-auto" : ""}`}
       />
     </div>
   );
@@ -238,7 +262,8 @@ function IdeaDescField({
   );
 }
 
-const PLAN_COLORS = ["#0969da", "#2da44e", "#9a6700", "#8250df", "#cf222e", "#0891b2"];
+const LIGHT_COLORS = ["#0969da", "#2da44e", "#9a6700", "#8250df", "#cf222e", "#0891b2"];
+const DARK_COLORS = ["#bd93f9", "#50fa7b", "#ffb86c", "#ff79c6", "#ff5555", "#8be9fd"];
 
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, "").trim();
@@ -254,10 +279,11 @@ function computeFocusScore(plan: Plan): number {
   return Math.max(1, goalsWords + ideaCount);
 }
 
-function FocusGraph({ plans }: { plans: Plan[] }) {
+function FocusGraph({ plans, theme }: { plans: Plan[]; theme: "light" | "dark" }) {
   const [hovered, setHovered] = useState<string | null>(null);
 
   const segments = useMemo(() => {
+    const colors = theme === "dark" ? DARK_COLORS : LIGHT_COLORS;
     if (plans.length === 0) return [];
     const scores = plans.map((p) => ({ id: p.id, title: p.title, score: computeFocusScore(p) }));
     const total = scores.reduce((s, x) => s + x.score, 0);
@@ -268,9 +294,9 @@ function FocusGraph({ plans }: { plans: Plan[] }) {
       const startAngle = cumAngle;
       cumAngle += angle;
       const endAngle = cumAngle;
-      return { ...x, fraction, startAngle, endAngle, color: PLAN_COLORS[i % PLAN_COLORS.length] };
+      return { ...x, fraction, startAngle, endAngle, color: colors[i % colors.length] };
     });
-  }, [plans]);
+  }, [plans, theme]);
 
   const cx = 80, cy = 80, R = 62, r = 38;
 
@@ -339,8 +365,23 @@ function FocusGraph({ plans }: { plans: Plan[] }) {
   );
 }
 
+const OVERVIEW_SENTINEL = "__overview__";
+
 // ── Main Plans view ──────────────────────────────────────────────────────────
-export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onPlansChange: (plans: Plan[]) => void }) {
+export default function PlansView({
+  plans,
+  onPlansChange,
+  overview,
+  onOverviewChange,
+  theme = "light",
+}: {
+  plans: Plan[];
+  onPlansChange: (plans: Plan[]) => void;
+  overview: string;
+  onOverviewChange: (text: string) => void;
+  theme?: "light" | "dark";
+}) {
+  const colors = theme === "dark" ? DARK_COLORS : LIGHT_COLORS;
   const [activePlanId, setActivePlanId] = useState<string | null>(() => plans[0]?.id ?? null);
   const [addingNew, setAddingNew] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -398,10 +439,63 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
     updatePlan(planId, { ideaCards: (plan.ideaCards ?? []).filter((c) => c.id !== cardId) });
   }, [plans, updatePlan]);
 
+  const [showPlansList, setShowPlansList] = useState(false);
+
   return (
-    <div className="flex h-full overflow-hidden relative">
-      {/* ── Sidebar ── */}
-      <div className="w-60 flex-shrink-0 border-r border-[#d0d7de] bg-white flex flex-col pb-3">
+    <div className="flex flex-col md:flex-row h-full overflow-hidden relative">
+      {/* ── Mobile plan selector ── */}
+      <div className="md:hidden flex items-center gap-2 px-3 py-2 border-b border-[#d0d7de] bg-white flex-shrink-0">
+        <button
+          onClick={() => setShowPlansList((v) => !v)}
+          className="flex items-center gap-1.5 text-xs font-medium text-[#57606a] hover:text-[#1f2328] transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{ transform: showPlansList ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}>
+            <path d="m6.22 3.22 4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L8.94 8 5.19 4.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018Z"/>
+          </svg>
+          {activePlan ? activePlan.title : "Plans"}
+        </button>
+        <button
+          onClick={() => {
+            if (plans.length >= 5) { setLimitError(true); setTimeout(() => setLimitError(false), 3000); return; }
+            setAddingNew(true); setNewTitle(""); setShowPlansList(true);
+          }}
+          className="ml-auto w-6 h-6 flex items-center justify-center rounded hover:bg-[#f6f8fa] text-[#57606a]"
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M7.75 2a.75.75 0 0 1 .75.75V7h4.25a.75.75 0 0 1 0 1.5H8.5v4.25a.75.75 0 0 1-1.5 0V8.5H2.75a.75.75 0 0 1 0-1.5H7V2.75A.75.75 0 0 1 7.75 2Z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Mobile plan list dropdown */}
+      {showPlansList && (
+        <div className="md:hidden border-b border-[#d0d7de] bg-white flex-shrink-0 max-h-60 overflow-y-auto">
+          <button
+            onClick={() => { setActivePlanId(OVERVIEW_SENTINEL); setShowPlansList(false); }}
+            className={`w-full text-left px-4 py-2 flex items-center gap-2 transition-colors ${activePlanId === OVERVIEW_SENTINEL ? "bg-[#f0f8ff] text-[#0969da]" : "hover:bg-[#f6f8fa] text-[#57606a]"}`}
+          >
+            <span className="text-xs font-semibold">Overview</span>
+          </button>
+          {addingNew && (
+            <div className="px-3 py-2 border-t border-[#f0f2f4]">
+              <input autoFocus value={newTitle} onChange={(e) => setNewTitle(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { addPlan(); setShowPlansList(false); } if (e.key === "Escape") setAddingNew(false); }} placeholder="Plan name..." className="w-full text-sm px-2 py-1.5 rounded border border-[#0969da] outline-none" />
+            </div>
+          )}
+          {plans.map((plan, idx) => (
+            <button
+              key={plan.id}
+              onClick={() => { setActivePlanId(plan.id); setShowPlansList(false); }}
+              className={`w-full text-left px-4 py-2.5 border-t border-[#f0f2f4] flex items-center gap-2 ${plan.id === activePlanId ? "bg-[#f6f8fa]" : "hover:bg-[#f6f8fa]"}`}
+            >
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: colors[idx % colors.length] }} />
+              <span className="text-sm font-medium truncate" style={{ color: plan.id === activePlanId ? colors[idx % colors.length] : undefined }}>{plan.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Sidebar (desktop only) ── */}
+      <div className="ui-sans w-60 flex-shrink-0 border-r border-[#d0d7de] bg-white hidden md:flex flex-col pb-3">
         <div className="px-4 py-3 border-b border-[#d0d7de] flex items-center justify-between">
           <span className="text-xs font-semibold text-[#57606a] uppercase tracking-wider">Plans</span>
           <button
@@ -416,6 +510,24 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
             </svg>
           </button>
         </div>
+
+        {/* Overview tab */}
+        <button
+          onClick={() => setActivePlanId(OVERVIEW_SENTINEL)}
+          className={`w-full text-left px-4 py-2 border-b border-[#d0d7de] flex items-center gap-2 transition-colors ${
+            activePlanId === OVERVIEW_SENTINEL
+              ? "bg-[#f0f8ff] text-[#0969da]"
+              : "hover:bg-[#f6f8fa] text-[#57606a]"
+          }`}
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0">
+            <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.062 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" />
+          </svg>
+          <span className="text-xs font-semibold">Overview</span>
+          {overview.trim().length > 0 && (
+            <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#0969da] flex-shrink-0" />
+          )}
+        </button>
 
         {addingNew && (
           <div className="px-3 py-2 border-b border-[#d0d7de]">
@@ -454,7 +566,7 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
             </div>
           )}
           {plans.map((plan, idx) => {
-            const planColor = PLAN_COLORS[idx % PLAN_COLORS.length];
+            const planColor = colors[idx % colors.length];
             return (
               <button
                 key={plan.id}
@@ -483,7 +595,7 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
             );
           })}
         </div>
-        <FocusGraph plans={plans} />
+        <FocusGraph plans={plans} theme={theme} />
       </div>
 
       {/* ── Delete confirmation modal ── */}
@@ -527,15 +639,35 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
 
       {/* ── Detail area ── */}
       <div className="flex-1 flex flex-col overflow-hidden bg-[#f6f8fa]">
-        {activePlan ? (
+        {activePlanId === OVERVIEW_SENTINEL ? (
+          <div className="flex-1 flex flex-col px-4 md:px-8 pt-4 md:pt-6 pb-6 md:pb-8 min-h-0">
+            <div className="flex items-center gap-2 mb-1 flex-shrink-0">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="#0969da">
+                <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.062 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" />
+              </svg>
+              <h2 className="text-2xl font-semibold text-[#0969da]">Overview</h2>
+            </div>
+            <p className="text-xs text-[#8c959f] mb-5 flex-shrink-0">Your high-level goals & milestones across all plans</p>
+            <div className="flex-1 min-h-0 rounded-xl border border-[#0969da]/20 bg-[#f0f8ff] p-4 flex flex-col">
+              <RichEditor
+                key="overview"
+                value={overview}
+                onChange={onOverviewChange}
+                placeholder="Drop your goals, milestones, big picture thinking here..."
+                textSize="text-[12px]"
+                grow
+              />
+            </div>
+          </div>
+        ) : activePlan ? (
           <>
             {/* Title */}
-            <div className="px-8 pt-6 pb-4 flex-shrink-0">
+            <div className="px-4 md:px-8 pt-4 md:pt-6 pb-3 md:pb-4 flex-shrink-0">
               <input
                 value={activePlan.title}
                 onChange={(e) => updatePlan(activePlan.id, { title: e.target.value })}
                 className="w-full text-2xl font-semibold bg-transparent outline-none border-none placeholder-[#8c959f]"
-                style={{ color: PLAN_COLORS[plans.findIndex((p) => p.id === activePlan.id) % PLAN_COLORS.length] }}
+                style={{ color: colors[plans.findIndex((p) => p.id === activePlan.id) % colors.length] }}
                 placeholder="Plan title"
               />
               <p className="text-xs text-[#8c959f] mt-1">
@@ -543,7 +675,7 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
               </p>
             </div>
 
-            <div className="flex-1 flex flex-col gap-4 px-8 pb-8 min-h-0">
+            <div className="flex-1 flex flex-col gap-4 px-4 md:px-8 pb-6 md:pb-8 min-h-0 overflow-y-auto">
 
               {/* Goals & Milestones */}
               <div className="flex-shrink-0 rounded-xl border bg-[#f0fff4] border-[#2da44e]/30 p-4 flex flex-col gap-3">
@@ -558,6 +690,7 @@ export default function PlansView({ plans, onPlansChange }: { plans: Plan[]; onP
                   value={activePlan.goals ?? ""}
                   onChange={(v) => updatePlan(activePlan.id, { goals: v })}
                   placeholder="What do you want to achieve?"
+                  textSize="text-[12px]"
                 />
               </div>
 

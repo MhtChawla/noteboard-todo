@@ -8,11 +8,7 @@ a clean, minimal workspace that lives entirely in your browser. no accounts, no 
 
 ## preview
 
-![Noteboard task board preview](./Preview_1.png)
-
-![Noteboard schedule preview](./Preview_2.png)
-
-![Noteboard plans preview](./Preview_3.png)
+![Noteboard preview](./noteboard-preview.gif)
 
 ---
 
