@@ -13,10 +13,13 @@ const PLANS_OVERVIEW_KEY = "noteboard_plans_overview";
 const EISENHOWER_SLOTS_KEY = "noteboard_eisenhower_slots";
 const EISENHOWER_CROSSED_KEY = "noteboard_eisenhower_crossed";
 
+// Each deployment is scoped to one board (one user's data).
+const BOARD_ID = process.env.NEXT_PUBLIC_BOARD_ID || "mohit";
+
 async function dbSet(key: string, value: string): Promise<void> {
   await supabase
     .from("kv_store")
-    .upsert({ key, value }, { onConflict: "key" });
+    .upsert({ board: BOARD_ID, key, value }, { onConflict: "board,key" });
 }
 
 // ── Load all data in one round-trip ──
@@ -38,7 +41,10 @@ export interface AllData {
 const EMPTY_EISENHOWER: EisenhowerSlots = { do: [], schedule: [], delegate: [], eliminate: [] };
 
 export async function loadAllData(): Promise<AllData> {
-  const { data } = await supabase.from("kv_store").select("key, value");
+  const { data } = await supabase
+    .from("kv_store")
+    .select("key, value")
+    .eq("board", BOARD_ID);
   const map = new Map<string, string>();
   if (data) {
     for (const row of data) map.set(row.key, row.value);
