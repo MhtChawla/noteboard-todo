@@ -8,6 +8,7 @@ interface Props {
   onUpdate: (id: string, updates: Partial<Task>) => void;
   onDelete: (id: string) => void;
   onDragStart: (id: string) => void;
+  onDrop: (status: Status) => void;
   onSelect?: (id: string) => void;
 }
 
@@ -31,12 +32,18 @@ function renderWithLinks(text: string) {
   );
 }
 
-export default function TaskCard({ task, onUpdate, onDelete, onDragStart, onSelect }: Props) {
+export default function TaskCard({ task, onUpdate, onDelete, onDragStart, onDrop, onSelect }: Props) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDesc, setEditDesc] = useState(task.description);
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+  const touchOffsetX = useRef(0);
+  const touchOffsetY = useRef(0);
+  const touchDragging = useRef(false);
+  const touchMoved = useRef(false);
 
   const col = COLUMNS.find((c) => c.id === task.status)!;
 
@@ -55,11 +62,109 @@ export default function TaskCard({ task, onUpdate, onDelete, onDragStart, onSele
     (e.currentTarget as HTMLElement).classList.remove("card-dragging");
   }
 
+  function getColumnUnderPoint(x: number, y: number): Status | null {
+    // ghost already has pointer-events:none so elementFromPoint sees through it
+    const el = document.elementFromPoint(x, y);
+    const zone = el?.closest("[data-column-status]");
+    return (zone?.getAttribute("data-column-status") as Status) ?? null;
+  }
+
+  function setColumnHighlight(status: Status | null) {
+    document.querySelectorAll("[data-column-status]").forEach((el) => {
+      (el as HTMLElement).style.outline = "";
+    });
+    if (status) {
+      const zone = document.querySelector(`[data-column-status="${status}"]`);
+      if (zone) (zone as HTMLElement).style.outline = "2px solid #0969da";
+    }
+  }
+
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    if (editing) return;
+    const touch = e.touches[0];
+    touchMoved.current = false;
+    touchDragging.current = false;
+
+    const cardEl = e.currentTarget;
+    const rect = cardEl.getBoundingClientRect();
+    touchOffsetX.current = touch.clientX - rect.left;
+    touchOffsetY.current = touch.clientY - rect.top;
+
+    // Use a short delay so quick taps still register as clicks
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+
+    const onMove = (ev: TouchEvent) => {
+      const t = ev.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+
+      if (!touchDragging.current && Math.hypot(dx, dy) > 6) {
+        // Crossed threshold — start drag
+        touchDragging.current = true;
+        touchMoved.current = true;
+        onDragStart(task.id);
+
+        // Create ghost
+        const ghost = cardEl.cloneNode(true) as HTMLDivElement;
+        ghost.style.cssText = `
+          position:fixed;
+          top:${rect.top}px;
+          left:${rect.left}px;
+          width:${rect.width}px;
+          pointer-events:none;
+          opacity:0.85;
+          transform:rotate(2deg) scale(1.03);
+          z-index:9999;
+          box-shadow:0 8px 24px rgba(0,0,0,0.18);
+          border-radius:8px;
+          transition:none;
+        `;
+        document.body.appendChild(ghost);
+        ghostRef.current = ghost;
+      }
+
+      if (touchDragging.current) {
+        ev.preventDefault();
+        if (ghostRef.current) {
+          ghostRef.current.style.left = `${t.clientX - touchOffsetX.current}px`;
+          ghostRef.current.style.top = `${t.clientY - touchOffsetY.current}px`;
+        }
+        setColumnHighlight(getColumnUnderPoint(t.clientX, t.clientY));
+      }
+    };
+
+    const onEnd = (ev: TouchEvent) => {
+      document.removeEventListener("touchmove", onMove);
+      document.removeEventListener("touchend", onEnd);
+
+      if (!touchDragging.current) return;
+      touchDragging.current = false;
+
+      const t = ev.changedTouches[0];
+      const targetStatus = getColumnUnderPoint(t.clientX, t.clientY);
+
+      ghostRef.current?.remove();
+      ghostRef.current = null;
+      setColumnHighlight(null);
+
+      if (targetStatus) onDrop(targetStatus);
+    };
+
+    document.addEventListener("touchmove", onMove, { passive: false });
+    document.addEventListener("touchend", onEnd);
+  }
+
   return (
     <div
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onTouchStart={handleTouchStart}
+      onClick={(e) => {
+        // Suppress click after a touch-drag so the card doesn't open
+        if (touchMoved.current) { touchMoved.current = false; e.stopPropagation(); return; }
+      }}
       className="fade-in bg-white rounded-lg border border-[#d0d7de] shadow-[0_1px_3px_rgba(31,35,40,0.06)] hover:shadow-[0_3px_8px_rgba(31,35,40,0.1)] transition-all duration-150 cursor-grab active:cursor-grabbing group task-card"
     >
       {editing ? (

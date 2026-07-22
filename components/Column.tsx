@@ -72,6 +72,7 @@ export default function Column({
 
       {/* Drop zone */}
       <div
+        data-column-status={column.id}
         className="flex-1 flex flex-col gap-2.5 rounded-xl p-2.5 min-h-[200px] transition-all duration-150 border-2"
         style={{
           background: isDragOver ? "var(--drag-over-bg)" : column.color,
@@ -85,6 +86,7 @@ export default function Column({
             onUpdate={onUpdateTask}
             onDelete={onDeleteTask}
             onDragStart={onDragStart}
+            onDrop={onDrop}
             onSelect={onSelectTask}
           />
         ))}
