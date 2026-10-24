@@ -226,7 +226,9 @@ export default function Home() {
     );
   }
 
-  const progressTasks = tasks.filter((t) => t.status !== "blocked");
+  // Progress covers only the tasks scheduled into today's slots
+  const todayIds = new Set(Object.values(weekSchedule[todayKey]?.slots ?? {}).flat());
+  const progressTasks = tasks.filter((t) => todayIds.has(t.id) && t.status !== "blocked");
   const totalTasks = progressTasks.length;
   const completedTasks = progressTasks.filter((t) => t.status === "complete").length;
 
@@ -284,6 +286,7 @@ export default function Home() {
                 {/* Progress bar — hidden on mobile */}
                 {totalTasks > 0 && (
                   <div className="hidden md:flex items-center gap-3">
+                    <span className="text-xs text-[#57606a]">Today&apos;s progress</span>
                     <div className="w-32 h-1.5 bg-[#eaeef2] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#2da44e] rounded-full transition-all duration-500"
@@ -291,7 +294,7 @@ export default function Home() {
                       />
                     </div>
                     <span className="text-xs text-[#57606a] tabular-nums">
-                      {Math.round((completedTasks / totalTasks) * 100)}%
+                      {completedTasks}/{totalTasks} done · {Math.round((completedTasks / totalTasks) * 100)}%
                     </span>
                   </div>
                 )}
@@ -299,7 +302,7 @@ export default function Home() {
                 {/* Progress — mobile only (compact) */}
                 {totalTasks > 0 && (
                   <span className="md:hidden text-[10px] text-[#57606a] tabular-nums font-medium">
-                    {Math.round((completedTasks / totalTasks) * 100)}%
+                    Today {completedTasks}/{totalTasks} · {Math.round((completedTasks / totalTasks) * 100)}%
                   </span>
                 )}
 
