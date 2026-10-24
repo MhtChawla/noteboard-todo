@@ -23,7 +23,6 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
-  const [devFont, setDevFont] = useState(true);
   const [weekSchedule, setWeekSchedule] = useState<WeekSchedule>({});
   const [todayKey, setTodayKey] = useState(() => dateKey(new Date()));
   const weekRef = useRef<WeekSchedule>({});
@@ -47,8 +46,6 @@ export default function Home() {
         ideaCards: p.ideaCards ?? [],
         links: p.links ?? "",
       }));
-      const storedFont = localStorage.getItem("devFont");
-      const initialDevFont = storedFont !== "false";
       const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
       const initialTheme = storedTheme ?? "light";
       // First run after the week view shipped: the old single-day schedule becomes today's
@@ -67,7 +64,6 @@ export default function Home() {
         setEisenhowerSlots(data.eisenhowerSlots);
         setEisenhowerCrossed(data.eisenhowerCrossed);
         setMounted(true);
-        setDevFont(initialDevFont);
         setTheme(initialTheme);
       });
     }).catch((err: Error) => setLoadError(err.message || "Unknown error"));
@@ -233,7 +229,7 @@ export default function Home() {
   const completedTasks = progressTasks.filter((t) => t.status === "complete").length;
 
   return (
-    <div className={`flex flex-col md:flex-row h-screen overflow-hidden ${theme === "dark" ? "dark bg-[#282a36] text-[#f8f8f2]" : "bg-[#f6f8fa]"} ${devFont ? "" : "font-default"}`}>
+    <div className={`flex flex-col md:flex-row h-screen overflow-hidden ${theme === "dark" ? "dark bg-[#282a36] text-[#f8f8f2]" : "bg-[#f6f8fa]"}`}>
       {/* Main board */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Header */}
@@ -286,7 +282,6 @@ export default function Home() {
                 {/* Progress bar — hidden on mobile */}
                 {totalTasks > 0 && (
                   <div className="hidden md:flex items-center gap-3">
-                    <span className="text-xs text-[#57606a]">Today&apos;s progress</span>
                     <div className="w-32 h-1.5 bg-[#eaeef2] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#2da44e] rounded-full transition-all duration-500"
@@ -294,7 +289,7 @@ export default function Home() {
                       />
                     </div>
                     <span className="text-xs text-[#57606a] tabular-nums">
-                      {completedTasks}/{totalTasks} done · {Math.round((completedTasks / totalTasks) * 100)}%
+                      {Math.round((completedTasks / totalTasks) * 100)}%
                     </span>
                   </div>
                 )}
@@ -302,7 +297,7 @@ export default function Home() {
                 {/* Progress — mobile only (compact) */}
                 {totalTasks > 0 && (
                   <span className="md:hidden text-[10px] text-[#57606a] tabular-nums font-medium">
-                    Today {completedTasks}/{totalTasks} · {Math.round((completedTasks / totalTasks) * 100)}%
+                    {Math.round((completedTasks / totalTasks) * 100)}%
                   </span>
                 )}
 
@@ -346,23 +341,6 @@ export default function Home() {
                   : "bg-[#bd93f9] border-[#9b6ef3] hover:scale-110 shadow-md shadow-[#bd93f9]/20 cursor-pointer"
                 }`}
             />
-
-            {/* Font mode toggle — hidden on mobile */}
-            <button
-              onClick={() => setDevFont((v) => {
-                const next = !v;
-                localStorage.setItem("devFont", String(next));
-                return next;
-              })}
-              title={devFont ? "Switch to default font" : "Switch to dev font (monospace)"}
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-0 h-[29px] rounded-md border text-[11px] font-medium transition-colors ${devFont
-                  ? "bg-[#1f2328] text-white border-[#1f2328]"
-                  : "bg-white text-[#57606a] border-[#d0d7de] hover:bg-[#f6f8fa]"
-                }`}
-              style={{ fontFamily: "Menlo, Monaco, monospace" }}
-            >
-              🧑‍💻 dev-mode
-            </button>
 
             {/* Workspace toggle — mobile only */}
             <button
