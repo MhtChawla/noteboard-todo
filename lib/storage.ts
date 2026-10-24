@@ -19,10 +19,98 @@ const QUICK_NOTES_KEY = "noteboard_quick_notes";
 // Each deployment is scoped to one board (one user's data).
 const BOARD_ID = process.env.NEXT_PUBLIC_BOARD_ID || "mohit";
 
-async function dbSet(key: string, value: string): Promise<void> {
-  await supabase
-    .from("kv_store")
-    .upsert({ board: BOARD_ID, key, value }, { onConflict: "board,key" });
+// ── Save safety ──
+// Board data is irreplaceable, so writes follow three rules:
+// 1. Nothing is written until a load has succeeded — a failed load must never
+//    turn into an empty board saved over the real one.
+// 2. A value identical to what the server holds is never re-sent, so opening
+//    the app writes nothing.
+// 3. Failed writes stay queued and are retried until they land.
+
+export type SaveStatus = "saved" | "saving" | "error";
+
+const serverValues = new Map<string, string>(); // last value known to be in the database
+const pending = new Map<string, string>(); // latest value per key still waiting to be written
+let loadedOnce = false;
+let flushing = false;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let retryDelay = 2000;
+let saveStatus: SaveStatus = "saved";
+const statusListeners = new Set<() => void>();
+
+function setSaveStatus(next: SaveStatus) {
+  if (saveStatus === next) return;
+  saveStatus = next;
+  statusListeners.forEach((l) => l());
+}
+
+export function getSaveStatus(): SaveStatus {
+  return saveStatus;
+}
+
+export function subscribeSaveStatus(cb: () => void): () => void {
+  statusListeners.add(cb);
+  return () => statusListeners.delete(cb);
+}
+
+function dbSet(key: string, value: string): void {
+  if (!loadedOnce) {
+    console.error(`Not saving "${key}": board data has not loaded successfully yet`);
+    return;
+  }
+  if (!pending.has(key) && serverValues.get(key) === value) return;
+  pending.set(key, value);
+  void flush();
+}
+
+async function flush(): Promise<void> {
+  if (flushing) return;
+  flushing = true;
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+  setSaveStatus("saving");
+
+  let failed = false;
+  while (pending.size > 0 && !failed) {
+    for (const [key, value] of [...pending]) {
+      let ok = false;
+      try {
+        const { error } = await supabase
+          .from("kv_store")
+          .upsert({ board: BOARD_ID, key, value }, { onConflict: "board,key" });
+        ok = !error;
+        if (error) console.error(`Saving "${key}" failed, will retry:`, error.message);
+      } catch (err) {
+        console.error(`Saving "${key}" failed, will retry:`, err);
+      }
+      if (!ok) {
+        failed = true;
+        break;
+      }
+      serverValues.set(key, value);
+      // Edits made while this write was in flight stay queued for the next pass
+      if (pending.get(key) === value) pending.delete(key);
+    }
+  }
+
+  flushing = false;
+  if (failed) {
+    setSaveStatus("error");
+    retryTimer = setTimeout(() => void flush(), retryDelay);
+    retryDelay = Math.min(retryDelay * 2, 30000);
+  } else {
+    retryDelay = 2000;
+    setSaveStatus("saved");
+  }
+}
+
+// Warn before closing the tab while changes are still unsaved
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", (e) => {
+    if (pending.size > 0) e.preventDefault();
+  });
 }
 
 // ── Load all data in one round-trip ──
@@ -45,15 +133,31 @@ export interface AllData {
 
 const EMPTY_EISENHOWER: EisenhowerSlots = { do: [], schedule: [], delegate: [], eliminate: [] };
 
-export async function loadAllData(): Promise<AllData> {
-  const { data } = await supabase
+let inflightLoad: Promise<AllData> | null = null;
+
+/** Rejects if the database can't be read — callers must then save nothing */
+export function loadAllData(): Promise<AllData> {
+  inflightLoad ??= fetchAllData().finally(() => {
+    inflightLoad = null;
+  });
+  return inflightLoad;
+}
+
+async function fetchAllData(): Promise<AllData> {
+  const { data, error } = await supabase
     .from("kv_store")
     .select("key, value")
     .eq("board", BOARD_ID);
+  if (error || !data) throw new Error(error?.message ?? "No data returned");
+
   const map = new Map<string, string>();
-  if (data) {
-    for (const row of data) map.set(row.key, row.value);
+  for (const row of data) {
+    map.set(row.key, row.value);
+    serverValues.set(row.key, row.value);
   }
+  // Edits not yet written win over the older copy in the database
+  for (const [key, value] of pending) map.set(key, value);
+  loadedOnce = true;
 
   function parse<T>(key: string, fallback: T): T {
     const raw = map.get(key);

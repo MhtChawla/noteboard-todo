@@ -59,12 +59,21 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   const [futureTasks, setFutureTasks] = useState<FutureTask[]>([]);
   const [newFutureTitle, setNewFutureTitle] = useState("");
 
+  // Pointers and future tasks are only editable once they loaded — saving
+  // after a failed load would overwrite the real lists with empty ones
+  const [loaded, setLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
   useEffect(() => {
-    loadAllData().then((data) => {
-      setPointers(data.pointers);
-      setFutureTasks(data.futureTasks);
-    });
-  }, []);
+    loadAllData()
+      .then((data) => {
+        setPointers(data.pointers);
+        setFutureTasks(data.futureTasks);
+        setLoaded(true);
+      })
+      .catch(() => setLoadFailed(true));
+  }, [loadAttempt]);
 
   function addPlan() {
     const title = newPlanTitle.trim();
@@ -89,6 +98,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   }
 
   function addFutureTask() {
+    if (!loaded) return;
     const title = newFutureTitle.trim();
     if (!title) return;
     const task: FutureTask = { id: genId(), title, createdAt: Date.now() };
@@ -99,6 +109,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   }
 
   function promoteFutureTask(task: FutureTask) {
+    if (!loaded) return;
     onAddTask("todo", task.title, "");
     const updated = futureTasks.filter((t) => t.id !== task.id);
     setFutureTasks(updated);
@@ -106,12 +117,14 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   }
 
   function deleteFutureTask(id: string) {
+    if (!loaded) return;
     const updated = futureTasks.filter((t) => t.id !== id);
     setFutureTasks(updated);
     saveFutureTasks(updated);
   }
 
   function addPointer() {
+    if (!loaded) return;
     const label = newPtrLabel.trim();
     if (!label) return;
     const updated = [...pointers, { id: genId(), label, href: newPtrHref.trim() }];
@@ -122,6 +135,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   }
 
   function deletePointer(id: string) {
+    if (!loaded) return;
     const updated = pointers.filter((p) => p.id !== id);
     setPointers(updated);
     savePointers(updated);
@@ -177,6 +191,18 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
       </div>
 
       {(!collapsed || isMobile) && view === "quicknotes" && <QuickNotesPanel />}
+
+      {(!collapsed || isMobile) && view === "workspace" && loadFailed && (
+        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#ffebe9] border-b border-[#ffcecb] flex-shrink-0">
+          <span className="text-[10px] text-[#cf222e]">Couldn&apos;t load pointers &amp; future tasks — editing paused, nothing changed.</span>
+          <button
+            onClick={() => { setLoadFailed(false); setLoadAttempt((n) => n + 1); }}
+            className="text-[10px] font-medium px-2 py-0.5 rounded border border-[#cf222e] text-[#cf222e] hover:bg-white"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {(!collapsed || isMobile) && view === "workspace" && (
         <div className="flex flex-col flex-1 overflow-hidden">

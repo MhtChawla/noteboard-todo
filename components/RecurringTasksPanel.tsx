@@ -16,14 +16,22 @@ export default function RecurringTasksPanel({ onAddTask }: Props) {
   const [items, setItems] = useState<RecurringTask[]>([]);
   const [input, setInput] = useState("");
   const [interval, setInterval] = useState<RecurInterval>("1D");
+  const [loaded, setLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
-    loadAllData().then((data) => setItems(data.recurringTasks));
-  }, []);
+    loadAllData()
+      .then((data) => {
+        setItems(data.recurringTasks);
+        setLoaded(true);
+      })
+      .catch(() => setLoadFailed(true));
+  }, [loadAttempt]);
 
   function add() {
     const title = input.trim();
-    if (!title) return;
+    if (!title || !loaded) return;
     const task: RecurringTask = { id: generateId(), title, interval, createdAt: Date.now() };
     const next = [task, ...items];
     setItems(next);
@@ -33,6 +41,7 @@ export default function RecurringTasksPanel({ onAddTask }: Props) {
   }
 
   function remove(id: string) {
+    if (!loaded) return;
     const next = items.filter((t) => t.id !== id);
     setItems(next);
     saveRecurringTasks(next);
@@ -51,6 +60,18 @@ export default function RecurringTasksPanel({ onAddTask }: Props) {
         </svg>
         <span className="text-xs font-semibold text-[#1f2328]">Recurring Tasks</span>
       </div>
+
+      {loadFailed && (
+        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-[#ffebe9] border-b border-[#ffcecb] flex-shrink-0">
+          <span className="text-[10px] text-[#cf222e]">Couldn&apos;t load recurring tasks — editing paused, nothing changed.</span>
+          <button
+            onClick={() => { setLoadFailed(false); setLoadAttempt((n) => n + 1); }}
+            className="text-[10px] font-medium px-2 py-0.5 rounded border border-[#cf222e] text-[#cf222e] hover:bg-white"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Input row */}
       <div className="flex items-center gap-1.5 px-2.5 py-2 border-b border-[#d0d7de] flex-shrink-0">

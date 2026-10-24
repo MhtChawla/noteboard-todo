@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
 import { Task, Plan, Status, COLUMNS, EisenhowerSlots, WeekSchedule, DaySchedule } from "@/lib/types";
-import { loadAllData, saveTasks, savePlans, saveWeekSchedule, savePlansOverview, saveNotes } from "@/lib/storage";
+import { loadAllData, saveTasks, savePlans, saveWeekSchedule, savePlansOverview, saveNotes, getSaveStatus, subscribeSaveStatus } from "@/lib/storage";
 import { dateKey, nextDays, rolloverWeek, resetLeftovers } from "@/lib/week";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
@@ -32,8 +32,13 @@ export default function Home() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const dragTaskId = useRef<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const saveStatus = useSyncExternalStore(subscribeSaveStatus, getSaveStatus, () => "saved" as const);
 
   useEffect(() => {
+    // If this fails, `mounted` stays false: no save effect runs, so an empty
+    // board can never be written over the real one.
     loadAllData().then((data) => {
       const rawPlans = data.plans.map((p) => ({
         ...p,
@@ -65,8 +70,8 @@ export default function Home() {
         setDevFont(initialDevFont);
         setTheme(initialTheme);
       });
-    });
-  }, []);
+    }).catch((err: Error) => setLoadError(err.message || "Unknown error"));
+  }, [loadAttempt]);
 
   useEffect(() => {
     if (mounted && typeof window !== "undefined") {
@@ -199,8 +204,24 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#f6f8fa]">
-        <div className="w-5 h-5 border-2 border-[#d0d7de] border-t-[#0969da] rounded-full animate-spin" />
+      <div className="h-screen flex items-center justify-center bg-[#f6f8fa] p-4">
+        {loadError ? (
+          <div className="ui-sans max-w-sm w-full bg-white border border-[#d0d7de] rounded-lg p-5 text-center shadow-sm">
+            <p className="text-sm font-semibold text-[#1f2328]">Couldn&apos;t load your board</p>
+            <p className="text-xs text-[#57606a] mt-1.5 leading-relaxed">
+              Your data is safe — nothing has been changed or saved. Check your connection and try again.
+            </p>
+            <p className="text-[10px] text-[#8c959f] mt-2 break-words">{loadError}</p>
+            <button
+              onClick={() => { setLoadError(null); setLoadAttempt((n) => n + 1); }}
+              className="mt-4 text-xs font-medium px-4 py-1.5 rounded-md bg-[#1f2328] text-white hover:bg-[#2d333b] transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="w-5 h-5 border-2 border-[#d0d7de] border-t-[#0969da] rounded-full animate-spin" />
+        )}
       </div>
     );
   }
@@ -296,6 +317,17 @@ export default function Home() {
                   Schedule hourly/priorly
                 </button>
               </>
+            )}
+
+            {/* Unsaved changes — only shown while a save is failing */}
+            {saveStatus === "error" && (
+              <span
+                className="ui-sans flex items-center gap-1 text-[10px] md:text-[11px] font-medium text-[#cf222e] bg-[#ffebe9] border border-[#ffcecb] rounded-md px-2 py-1"
+                title="Your last changes haven't reached the database yet. Retrying automatically — keep this tab open."
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#cf222e] animate-pulse" />
+                Not saved · retrying
+              </span>
             )}
 
             {/* Theme Toggle Dot */}

@@ -43,34 +43,23 @@ function AutoTextarea({ value, onChange, autoFocus }: { value: string; onChange:
 export default function QuickNotesPanel() {
   const [notes, setNotes] = useState<QuickNote[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [focusId, setFocusId] = useState<string | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const latest = useRef<QuickNote[]>([]);
 
   useEffect(() => {
-    loadAllData().then((data) => {
-      setNotes(data.quickNotes);
-      setLoaded(true);
-    });
-  }, []);
+    loadAllData()
+      .then((data) => {
+        setNotes(data.quickNotes);
+        setLoaded(true);
+      })
+      .catch(() => setLoadFailed(true));
+  }, [loadAttempt]);
 
-  // Debounced autosave; flush any pending write when the panel closes
+  // Only save after a successful load (unchanged notes are skipped by storage)
   useEffect(() => {
-    if (!loaded) return;
-    latest.current = notes;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      saveQuickNotes(notes);
-      saveTimer.current = null;
-    }, 500);
+    if (loaded) saveQuickNotes(notes);
   }, [notes, loaded]);
-
-  useEffect(() => () => {
-    if (saveTimer.current) {
-      clearTimeout(saveTimer.current);
-      saveQuickNotes(latest.current);
-    }
-  }, []);
 
   function addNote() {
     const now = Date.now();
@@ -102,7 +91,18 @@ export default function QuickNotesPanel() {
 
       {/* Notes list */}
       <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
-        {!loaded && <p className="text-[11px] text-[#8c959f] text-center mt-4">Loading…</p>}
+        {!loaded && !loadFailed && <p className="text-[11px] text-[#8c959f] text-center mt-4">Loading…</p>}
+        {loadFailed && (
+          <div className="text-center mt-4 px-2">
+            <p className="text-[11px] text-[#cf222e]">Couldn&apos;t load quick notes. Nothing was changed.</p>
+            <button
+              onClick={() => { setLoadFailed(false); setLoadAttempt((n) => n + 1); }}
+              className="mt-2 text-[11px] font-medium px-3 py-1 rounded-md border border-[#d0d7de] text-[#1f2328] hover:bg-[#f6f8fa]"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         {loaded && notes.length === 0 && (
           <p className="text-[11px] text-[#8c959f] text-center mt-4 px-2">
             No quick notes yet. Rough ideas, reminders, anything — kept separate from the board.
