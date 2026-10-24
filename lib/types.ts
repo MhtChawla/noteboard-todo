@@ -47,6 +47,14 @@ export interface FutureTask {
   createdAt: number;
 }
 
+// Standalone scratch notes (sidebar) — unrelated to the board's Notes tab
+export interface QuickNote {
+  id: string;
+  text: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 // hour (8–20) → array of task IDs scheduled in that slot
 export type ScheduleSlots = Record<number, string[]>;
 

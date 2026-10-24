@@ -12,6 +12,10 @@ function useIsMobile() {
 }
 import { Plan, IdeaCard, Pointer, FutureTask, Status } from "@/lib/types";
 import RecurringTasksPanel from "./RecurringTasksPanel";
+import QuickNotesPanel from "./QuickNotesPanel";
+
+const PENCIL_PATH = "M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm.176 4.823L9.75 4.81l-6.286 6.287a.253.253 0 0 0-.064.108l-.558 1.953 1.953-.558a.253.253 0 0 0 .108-.064Zm1.238-3.763a.25.25 0 0 0-.354 0L10.811 3.75l1.439 1.44 1.263-1.263a.25.25 0 0 0 0-.354Z";
+const WORKSPACE_PATH = "M0 3.75C0 2.784.784 2 1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25Zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25ZM3.5 6.25a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1-.75-.75Zm.75 2.25h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1 0-1.5Z";
 
 function genId() {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -42,6 +46,7 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
   const [tab, setTab] = useState<"plans" | "pointers" | "recurring">("recurring");
+  const [view, setView] = useState<"workspace" | "quicknotes">("workspace");
 
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
   const [newPlanTitle, setNewPlanTitle] = useState("");
@@ -122,6 +127,11 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
     savePointers(updated);
   }
 
+  function openView(next: "workspace" | "quicknotes") {
+    setView(next);
+    setCollapsed(false);
+  }
+
   const TAB_LABELS = [
     { key: "recurring" as const, label: "Recurring" },
     { key: "plans" as const, label: "Plans" },
@@ -136,7 +146,21 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-[#d0d7de] flex-shrink-0">
         {(!collapsed || isMobile) && (
-          <span className="text-xs font-semibold text-[#1f2328]">Workspace</span>
+          <span className="text-xs font-semibold text-[#1f2328]">{view === "quicknotes" ? "Quick Notes" : "Workspace"}</span>
+        )}
+        {(!collapsed || isMobile) && (
+          <button
+            onClick={() => setView((v) => (v === "quicknotes" ? "workspace" : "quicknotes"))}
+            className={`ml-auto mr-1 rounded-md p-1 transition-colors flex-shrink-0 ${view === "quicknotes"
+                ? "bg-[#1f2328] text-white"
+                : "text-[#57606a] hover:text-[#1f2328] hover:bg-[#f6f8fa]"
+              }`}
+            title={view === "quicknotes" ? "Back to Workspace" : "Quick Notes"}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d={PENCIL_PATH} />
+            </svg>
+          </button>
         )}
         <button
           onClick={() => setCollapsed((v) => !v)}
@@ -152,7 +176,9 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
         </button>
       </div>
 
-      {(!collapsed || isMobile) && (
+      {(!collapsed || isMobile) && view === "quicknotes" && <QuickNotesPanel />}
+
+      {(!collapsed || isMobile) && view === "workspace" && (
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Tabs */}
           <div className="flex border-b border-[#d0d7de] flex-shrink-0">
@@ -392,10 +418,25 @@ export default function NotesPanel({ onAddTask, plans, onPlansChange, theme = "l
       )}
 
       {collapsed && !isMobile && (
-        <div className="flex flex-col items-center pt-4 gap-3">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="#adb5bd">
-            <path d="M0 3.75C0 2.784.784 2 1.75 2h12.5c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 14H1.75A1.75 1.75 0 0 1 0 12.25Zm1.75-.25a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25v-8.5a.25.25 0 0 0-.25-.25ZM3.5 6.25a.75.75 0 0 1 .75-.75h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1-.75-.75Zm.75 2.25h7a.75.75 0 0 1 0 1.5h-7a.75.75 0 0 1 0-1.5Z"/>
-          </svg>
+        <div className="flex flex-col items-center pt-3 gap-2">
+          <button
+            onClick={() => openView("workspace")}
+            className="text-[#57606a] hover:text-[#1f2328] hover:bg-[#f6f8fa] rounded-md p-1.5 transition-colors"
+            title="Workspace"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d={WORKSPACE_PATH} />
+            </svg>
+          </button>
+          <button
+            onClick={() => openView("quicknotes")}
+            className="text-[#57606a] hover:text-[#1f2328] hover:bg-[#f6f8fa] rounded-md p-1.5 transition-colors"
+            title="Quick Notes"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <path d={PENCIL_PATH} />
+            </svg>
+          </button>
         </div>
       )}
     </div>

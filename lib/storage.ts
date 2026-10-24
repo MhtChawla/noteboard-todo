@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { Task, RecurringTask, Plan, Pointer, FutureTask, ScheduleSlots, EisenhowerSlots } from "./types";
+import { Task, RecurringTask, Plan, Pointer, FutureTask, ScheduleSlots, EisenhowerSlots, QuickNote } from "./types";
 
 const TASKS_KEY = "noteboard_tasks";
 const NOTES_KEY = "noteboard_notes";
@@ -12,6 +12,7 @@ const MERGED_BOUNDARIES_KEY = "noteboard_merged_boundaries";
 const PLANS_OVERVIEW_KEY = "noteboard_plans_overview";
 const EISENHOWER_SLOTS_KEY = "noteboard_eisenhower_slots";
 const EISENHOWER_CROSSED_KEY = "noteboard_eisenhower_crossed";
+const QUICK_NOTES_KEY = "noteboard_quick_notes";
 
 // Each deployment is scoped to one board (one user's data).
 const BOARD_ID = process.env.NEXT_PUBLIC_BOARD_ID || "mohit";
@@ -36,6 +37,7 @@ export interface AllData {
   plansOverview: string;
   eisenhowerSlots: EisenhowerSlots;
   eisenhowerCrossed: string[];
+  quickNotes: QuickNote[];
 }
 
 const EMPTY_EISENHOWER: EisenhowerSlots = { do: [], schedule: [], delegate: [], eliminate: [] };
@@ -68,6 +70,7 @@ export async function loadAllData(): Promise<AllData> {
     plansOverview: map.get(PLANS_OVERVIEW_KEY) ?? "",
     eisenhowerSlots: parse<EisenhowerSlots>(EISENHOWER_SLOTS_KEY, { ...EMPTY_EISENHOWER }),
     eisenhowerCrossed: parse<string[]>(EISENHOWER_CROSSED_KEY, []),
+    quickNotes: parse<QuickNote[]>(QUICK_NOTES_KEY, []),
   };
 }
 
@@ -115,4 +118,8 @@ export function saveEisenhowerSlots(slots: EisenhowerSlots): void {
 
 export function saveEisenhowerCrossed(crossed: string[]): void {
   dbSet(EISENHOWER_CROSSED_KEY, JSON.stringify(crossed));
+}
+
+export function saveQuickNotes(notes: QuickNote[]): void {
+  dbSet(QUICK_NOTES_KEY, JSON.stringify(notes));
 }
