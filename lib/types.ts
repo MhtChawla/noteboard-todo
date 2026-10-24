@@ -58,6 +58,15 @@ export interface QuickNote {
 // hour (8–20) → array of task IDs scheduled in that slot
 export type ScheduleSlots = Record<number, string[]>;
 
+// One day's schedule; h in merged means hours h and h+1 form one block
+export interface DaySchedule {
+  slots: ScheduleSlots;
+  merged: number[];
+}
+
+// "YYYY-MM-DD" (local date) → that day's schedule
+export type WeekSchedule = Record<string, DaySchedule>;
+
 export type EisenhowerQuadrant = "do" | "schedule" | "delegate" | "eliminate";
 export type EisenhowerSlots = Record<EisenhowerQuadrant, string[]>;
 

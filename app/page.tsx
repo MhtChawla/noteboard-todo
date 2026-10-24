@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Task, Plan, Status, COLUMNS, ScheduleSlots, EisenhowerSlots } from "@/lib/types";
-import { loadAllData, saveTasks, savePlans, saveScheduleSlots, saveMergedBoundaries, savePlansOverview, saveNotes } from "@/lib/storage";
+import { Task, Plan, Status, COLUMNS, EisenhowerSlots, WeekSchedule, DaySchedule } from "@/lib/types";
+import { loadAllData, saveTasks, savePlans, saveWeekSchedule, savePlansOverview, saveNotes } from "@/lib/storage";
+import { dateKey, nextDays, rolloverWeek, resetLeftovers } from "@/lib/week";
 import Column from "@/components/Column";
 import NotesPanel from "@/components/NotesPanel";
 import ScheduleView from "@/components/ScheduleView";
@@ -23,8 +24,9 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [scheduleMode, setScheduleMode] = useState(false);
   const [devFont, setDevFont] = useState(true);
-  const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlots>({});
-  const [mergedBoundaries, setMergedBoundaries] = useState<number[]>([]);
+  const [weekSchedule, setWeekSchedule] = useState<WeekSchedule>({});
+  const [todayKey, setTodayKey] = useState(() => dateKey(new Date()));
+  const weekRef = useRef<WeekSchedule>({});
   const [eisenhowerSlots, setEisenhowerSlots] = useState<EisenhowerSlots>({ do: [], schedule: [], delegate: [], eliminate: [] });
   const [eisenhowerCrossed, setEisenhowerCrossed] = useState<string[]>([]);
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -44,13 +46,19 @@ export default function Home() {
       const initialDevFont = storedFont !== "false";
       const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
       const initialTheme = storedTheme ?? "light";
+      // First run after the week view shipped: the old single-day schedule becomes today's
+      const today = dateKey(new Date());
+      const storedWeek = data.weekSchedule ?? {
+        [today]: { slots: data.scheduleSlots, merged: data.mergedBoundaries },
+      };
+      const { schedule, leftoverIds } = rolloverWeek(storedWeek, today);
       React.startTransition(() => {
-        setTasks(data.tasks);
+        setTasks(resetLeftovers(data.tasks, leftoverIds));
         setPlans(rawPlans);
         setPlansOverview(data.plansOverview);
         setNotes(data.notes);
-        setScheduleSlots(data.scheduleSlots);
-        setMergedBoundaries(data.mergedBoundaries);
+        setTodayKey(today);
+        setWeekSchedule(schedule);
         setEisenhowerSlots(data.eisenhowerSlots);
         setEisenhowerCrossed(data.eisenhowerCrossed);
         setMounted(true);
@@ -85,6 +93,25 @@ export default function Home() {
   useEffect(() => {
     if (mounted) saveNotes(notes);
   }, [notes, mounted]);
+
+  useEffect(() => {
+    weekRef.current = weekSchedule;
+    if (mounted) saveWeekSchedule(weekSchedule);
+  }, [weekSchedule, mounted]);
+
+  // Roll the week forward at midnight while the page stays open
+  useEffect(() => {
+    if (!mounted) return;
+    const id = setInterval(() => {
+      const today = dateKey(new Date());
+      if (today === todayKey) return;
+      const { schedule, leftoverIds } = rolloverWeek(weekRef.current, today);
+      setTodayKey(today);
+      setWeekSchedule(schedule);
+      setTasks((prev) => resetLeftovers(prev, leftoverIds));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [mounted, todayKey]);
 
   const onPlansChange = useCallback((next: Plan[]) => setPlans(next), []);
   const onOverviewChange = useCallback((text: string) => setPlansOverview(text), []);
@@ -124,7 +151,11 @@ export default function Home() {
     dragTaskId.current = null;
   }, [updateTask]);
 
-  const onDropToSlot = useCallback((hour: number) => {
+  const updateDay = useCallback((day: string, fn: (d: DaySchedule) => DaySchedule) => {
+    setWeekSchedule((prev) => ({ ...prev, [day]: fn(prev[day] ?? { slots: {}, merged: [] }) }));
+  }, []);
+
+  const onDropToSlot = useCallback((day: string, hour: number) => {
     if (!dragTaskId.current) return;
     const taskId = dragTaskId.current;
     dragTaskId.current = null;
@@ -132,48 +163,39 @@ export default function Home() {
     // move task to in-progress
     updateTask(taskId, { status: "progress" });
 
-    // remove from any existing slot, then add to new slot
-    setScheduleSlots((prev) => {
-      const next: ScheduleSlots = {};
-      for (const [h, ids] of Object.entries(prev)) {
-        next[Number(h)] = (ids as string[]).filter((id) => id !== taskId);
+    // remove from any existing slot on any day, then add to the new slot
+    setWeekSchedule((prev) => {
+      const next: WeekSchedule = {};
+      for (const [d, sched] of Object.entries(prev)) {
+        const slots: Record<number, string[]> = {};
+        for (const [h, ids] of Object.entries(sched.slots)) {
+          slots[Number(h)] = ids.filter((id) => id !== taskId);
+        }
+        next[d] = { ...sched, slots };
       }
-      next[hour] = [...(next[hour] ?? []), taskId];
-      saveScheduleSlots(next);
+      const target = next[day] ?? { slots: {}, merged: [] };
+      next[day] = { ...target, slots: { ...target.slots, [hour]: [...(target.slots[hour] ?? []), taskId] } };
       return next;
     });
   }, [updateTask]);
 
-  const onCompleteSlot = useCallback((hour: number) => {
-    const ids = scheduleSlots[hour] ?? [];
-    ids.forEach((id) => updateTask(id, { status: "complete" }));
-  }, [scheduleSlots, updateTask]);
+  const onCompleteSlot = useCallback((day: string, hours: number[]) => {
+    const slots = weekSchedule[day]?.slots ?? {};
+    hours.flatMap((h) => slots[h] ?? []).forEach((id) => updateTask(id, { status: "complete" }));
+  }, [weekSchedule, updateTask]);
 
-  const onMergeBoundary = useCallback((hour: number) => {
-    setMergedBoundaries((prev) => {
-      if (prev.includes(hour)) return prev;
-      const next = [...prev, hour].sort((a, b) => a - b);
-      saveMergedBoundaries(next);
-      return next;
-    });
-  }, []);
+  const onMergeBoundary = useCallback((day: string, hour: number) => {
+    updateDay(day, (d) => (d.merged.includes(hour) ? d : { ...d, merged: [...d.merged, hour].sort((a, b) => a - b) }));
+  }, [updateDay]);
 
-  const onUnmergeBoundary = useCallback((hour: number) => {
-    setMergedBoundaries((prev) => {
-      const next = prev.filter((h) => h !== hour);
-      saveMergedBoundaries(next);
-      return next;
-    });
-  }, []);
+  const onUnmergeBoundary = useCallback((day: string, hour: number) => {
+    updateDay(day, (d) => ({ ...d, merged: d.merged.filter((h) => h !== hour) }));
+  }, [updateDay]);
 
-  const onRemoveFromSlot = useCallback((hour: number, taskId: string) => {
+  const onRemoveFromSlot = useCallback((day: string, hour: number, taskId: string) => {
     updateTask(taskId, { status: "todo" });
-    setScheduleSlots((prev) => {
-      const next = { ...prev, [hour]: (prev[hour] ?? []).filter((id) => id !== taskId) };
-      saveScheduleSlots(next);
-      return next;
-    });
-  }, [updateTask]);
+    updateDay(day, (d) => ({ ...d, slots: { ...d.slots, [hour]: (d.slots[hour] ?? []).filter((id) => id !== taskId) } }));
+  }, [updateTask, updateDay]);
 
   if (!mounted) {
     return (
@@ -367,9 +389,10 @@ export default function Home() {
             <div className="flex-1 overflow-hidden">
               <ScheduleView
                 tasks={tasks}
-                slots={scheduleSlots}
+                week={weekSchedule}
+                days={nextDays(todayKey, 7)}
+                todayKey={todayKey}
                 dragTaskId={dragTaskId}
-                mergedBoundaries={mergedBoundaries}
                 onDropToSlot={onDropToSlot}
                 onRemoveFromSlot={onRemoveFromSlot}
                 onCompleteSlot={onCompleteSlot}

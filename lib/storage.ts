@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { Task, RecurringTask, Plan, Pointer, FutureTask, ScheduleSlots, EisenhowerSlots, QuickNote } from "./types";
+import { Task, RecurringTask, Plan, Pointer, FutureTask, ScheduleSlots, EisenhowerSlots, QuickNote, WeekSchedule } from "./types";
 
 const TASKS_KEY = "noteboard_tasks";
 const NOTES_KEY = "noteboard_notes";
@@ -7,8 +7,10 @@ const RECURRING_KEY = "noteboard_recurring";
 const PLANS_KEY = "noteboard_plans";
 const POINTERS_KEY = "noteboard_pointers";
 const FUTURE_KEY = "noteboard_future";
+// Legacy single-day schedule — read only, to migrate into the week schedule
 const SCHEDULE_KEY = "noteboard_schedule";
 const MERGED_BOUNDARIES_KEY = "noteboard_merged_boundaries";
+const WEEK_SCHEDULE_KEY = "noteboard_week_schedule";
 const PLANS_OVERVIEW_KEY = "noteboard_plans_overview";
 const EISENHOWER_SLOTS_KEY = "noteboard_eisenhower_slots";
 const EISENHOWER_CROSSED_KEY = "noteboard_eisenhower_crossed";
@@ -34,6 +36,7 @@ export interface AllData {
   futureTasks: FutureTask[];
   scheduleSlots: ScheduleSlots;
   mergedBoundaries: number[];
+  weekSchedule: WeekSchedule | null; // null until first migrated
   plansOverview: string;
   eisenhowerSlots: EisenhowerSlots;
   eisenhowerCrossed: string[];
@@ -67,6 +70,7 @@ export async function loadAllData(): Promise<AllData> {
     futureTasks: parse<FutureTask[]>(FUTURE_KEY, []),
     scheduleSlots: parse<ScheduleSlots>(SCHEDULE_KEY, {}),
     mergedBoundaries: parse<number[]>(MERGED_BOUNDARIES_KEY, []),
+    weekSchedule: parse<WeekSchedule | null>(WEEK_SCHEDULE_KEY, null),
     plansOverview: map.get(PLANS_OVERVIEW_KEY) ?? "",
     eisenhowerSlots: parse<EisenhowerSlots>(EISENHOWER_SLOTS_KEY, { ...EMPTY_EISENHOWER }),
     eisenhowerCrossed: parse<string[]>(EISENHOWER_CROSSED_KEY, []),
@@ -100,12 +104,8 @@ export function saveFutureTasks(tasks: FutureTask[]): void {
   dbSet(FUTURE_KEY, JSON.stringify(tasks));
 }
 
-export function saveScheduleSlots(slots: ScheduleSlots): void {
-  dbSet(SCHEDULE_KEY, JSON.stringify(slots));
-}
-
-export function saveMergedBoundaries(boundaries: number[]): void {
-  dbSet(MERGED_BOUNDARIES_KEY, JSON.stringify(boundaries));
+export function saveWeekSchedule(week: WeekSchedule): void {
+  dbSet(WEEK_SCHEDULE_KEY, JSON.stringify(week));
 }
 
 export function savePlansOverview(text: string): void {
